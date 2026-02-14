@@ -42,7 +42,7 @@ Each pattern addresses a production concern. This matrix shows which patterns ma
 | [Adversarial Inputs](patterns/testing/adversarial-inputs/) | Recommended | Critical | Recommended | Optional |
 | [Snapshot Testing](patterns/testing/snapshot-testing/) | Recommended | Recommended | Optional | Recommended |
 | **Safety** | | | | |
-| [Output Validation](patterns/safety/output-validation/) | Required | Critical | Required | Required |
+| [Structured Output Validation](patterns/safety/structured-output-validation/) | Required | Critical | Required | Required |
 | [PII Detection](patterns/safety/pii-detection/) | Required | Required | Required | Required |
 | [Prompt Injection Defense](patterns/safety/prompt-injection-defense/) | Required | Critical | Required | Recommended |
 | [Human-in-the-Loop](patterns/safety/human-in-the-loop/) | Optional | Required | N/A | Optional |
