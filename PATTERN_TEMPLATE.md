@@ -1,0 +1,66 @@
+# [Pattern Name]
+
+## The Problem
+
+What goes wrong without this pattern. Describe the failure mode in production terms -- not theoretical, but what actually breaks and what users experience.
+
+## What I Would Not Do
+
+The naive approach most teams take first, and specifically why it breaks under production conditions.
+
+## The Pattern
+
+### Architecture
+
+[Diagram or description of the pattern's architecture]
+
+### TypeScript Implementation
+
+See [`src/ts/`](src/ts/) for the full implementation.
+
+Key design decisions:
+-
+
+### Python Implementation
+
+See [`src/py/`](src/py/) for the full implementation.
+
+Key design decisions:
+-
+
+## Failure Modes
+
+How this pattern itself can fail. Every solution creates new failure modes.
+
+| Failure Mode | Detection Signal | Mitigation |
+|-------------|-----------------|------------|
+| | | |
+
+## Cost Analysis
+
+See [`cost-analysis.md`](cost-analysis.md) for detailed numbers.
+
+| Scale | Additional Cost | ROI vs. No Pattern |
+|-------|----------------|-------------------|
+| 1K req/day | | |
+| 10K req/day | | |
+| 100K req/day | | |
+
+## Testing
+
+How to verify this pattern works correctly. See test files in `src/ts/` and `src/py/`.
+
+- **Unit tests:**
+- **Integration tests:**
+- **What to regression test:**
+
+## When This Advice Stops Applying
+
+Boundary conditions and honest uncertainty. This pattern is not universally correct.
+
+-
+
+## Companion Content
+
+- Blog post: [Title](link) -- deeper reasoning on why this pattern matters
+- Related patterns: [Pattern Name](link)
