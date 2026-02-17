@@ -24,7 +24,7 @@ Each pattern addresses a production concern. This matrix shows which patterns ma
 | Pattern                        | RAG         | Agents      | Streaming   | Batch       |
 | ------------------------------ | ----------- | ----------- | ----------- | ----------- |
 | **Resilience**                 |             |             |             |             |
-| Graceful Degradation           | Required    | Required    | Critical    | Recommended |
+| [Graceful Degradation](patterns/resilience/graceful-degradation/) | Required    | Required    | Critical    | Recommended |
 | Retry with Budget              | Recommended | Required    | Required    | Required    |
 | Multi-Provider Failover        | Recommended | High ROI    | Critical    | Recommended |
 | Circuit Breaker                | Recommended | Required    | Critical    | Optional    |
