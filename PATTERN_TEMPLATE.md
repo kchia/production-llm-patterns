@@ -1,5 +1,7 @@
 # [Pattern Name]
 
+> **Part of [Production LLM Patterns](../../README.md).** Each pattern covers a specific production concern with architecture, dual implementations (TypeScript + Python), failure modes, cost analysis, and operational guidance. [How to read a pattern →](../../README.md#if-you-landed-on-a-specific-pattern)
+
 ## The Problem
 
 What goes wrong without this pattern. Describe the failure mode in production terms -- not theoretical, but what actually breaks and what users experience.

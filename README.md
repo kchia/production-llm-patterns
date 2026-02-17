@@ -17,6 +17,32 @@ This is my way of consolidating and accelerating that learning. Hopefully you fi
 - **Benchmarks and cost analysis** per pattern -- not just "it works" but "it works at this cost"
 - **Failure modes documented** -- every pattern includes how it itself can fail
 
+## How to Use This Repo
+
+### If you're exploring
+
+The Navigation Matrix below maps every pattern to common system types (RAG, agents, streaming, batch). The way I'd navigate it: find the column that matches what I'm building, then look for **Critical** and **Required** — those are what I'd want in place before going to production. **High ROI** patterns are worth prioritizing once the foundation is solid.
+
+### If you landed on a specific pattern
+
+Every pattern follows the same structure. Here's what each section answers:
+
+| Section | What it answers |
+|---|---|
+| **The Problem** | What breaks in production without this |
+| **What I Would Not Do** | The naive approach and why it fails |
+| **When You Need This** | Signals that it's time to adopt |
+| **The Pattern** | Architecture + dual TS/Python implementations |
+| **Failure Modes** | How the pattern itself can break |
+| **Observability & Operations** | What to monitor once deployed |
+| **Tuning & Evolution** | How the pattern changes over months |
+| **Cost Analysis** | Dollar costs at 3 scales |
+| **When This Advice Stops Applying** | Honest boundaries |
+
+### If you're building a system from scratch
+
+Patterns at the top of each category tend to be foundational — they're what I'd want in place first. The "Related patterns" section at the bottom of each pattern shows what naturally follows. There's no single right order; the way I'd think about sequencing is: start with whatever's **Critical** for the system type, then layer in **Required** patterns as the system stabilizes.
+
 ## Navigation Matrix
 
 Each pattern addresses a production concern. This matrix shows which patterns matter most for each system type.
