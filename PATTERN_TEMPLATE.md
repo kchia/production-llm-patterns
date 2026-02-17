@@ -18,33 +18,31 @@ The naive approach most teams take first, and specifically why it breaks under p
 
 See [`src/ts/`](src/ts/) for the full implementation.
 
-Key design decisions:
--
+## Key design decisions:
 
 ### Python Implementation
 
 See [`src/py/`](src/py/) for the full implementation.
 
-Key design decisions:
--
+## Key design decisions:
 
 ## Failure Modes
 
 How this pattern itself can fail. Every solution creates new failure modes.
 
 | Failure Mode | Detection Signal | Mitigation |
-|-------------|-----------------|------------|
-| | | |
+| ------------ | ---------------- | ---------- |
+|              |                  |            |
 
 ## Cost Analysis
 
 See [`cost-analysis.md`](cost-analysis.md) for detailed numbers.
 
-| Scale | Additional Cost | ROI vs. No Pattern |
-|-------|----------------|-------------------|
-| 1K req/day | | |
-| 10K req/day | | |
-| 100K req/day | | |
+| Scale        | Additional Cost | ROI vs. No Pattern |
+| ------------ | --------------- | ------------------ |
+| 1K req/day   |                 |                    |
+| 10K req/day  |                 |                    |
+| 100K req/day |                 |                    |
 
 ## Testing
 
