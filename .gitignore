@@ -9,3 +9,6 @@ build/
 *.log
 .venv/
 venv/
+PATTERN_TEMPLATE.md
+PLAYBOOK.md
+.claude/  

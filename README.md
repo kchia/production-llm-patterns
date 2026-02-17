@@ -75,7 +75,7 @@ Each pattern contains:
 
 ```
 patterns/<category>/<pattern-name>/
-├── README.md              # Problem, pattern, failure modes, cost analysis, boundary conditions
+├── README.md              # Full pattern documentation (see PATTERN_TEMPLATE.md for structure)
 ├── src/
 │   ├── ts/                # TypeScript implementation (idiomatic)
 │   └── py/                # Python implementation (idiomatic)
@@ -180,6 +180,8 @@ This repo reflects a specific point of view about production AI systems:
 2. **Failure modes matter more than features.** Every pattern documents how it itself can fail, because production is about resilience, not optimism.
 3. **Cost is a first-class concern.** Every pattern includes cost analysis because "it works" without "at what cost" is an incomplete answer.
 4. **Honest uncertainty over false confidence.** Every pattern includes boundary conditions -- when the advice stops applying.
+5. **Data quality is your ceiling.** The model can't outperform what you feed it. Several patterns in this repo exist solely because upstream data isn't as clean as you think.
+6. **Systems that don't learn, decay.** A deployed pattern isn't done. Every pattern documents tuning levers and drift signals because what works at launch degrades over months.
 
 ## Companion Content
 

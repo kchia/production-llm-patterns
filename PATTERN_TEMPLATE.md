@@ -8,6 +8,12 @@ What goes wrong without this pattern. Describe the failure mode in production te
 
 The naive approach most teams take first, and specifically why it breaks under production conditions.
 
+## When You Need This
+
+Signals that this pattern belongs in your system. What symptoms or scale thresholds trigger adoption.
+
+-
+
 ## The Pattern
 
 ### Architecture
@@ -18,13 +24,13 @@ The naive approach most teams take first, and specifically why it breaks under p
 
 See [`src/ts/`](src/ts/) for the full implementation.
 
-## Key design decisions:
+### Key design decisions:
 
 ### Python Implementation
 
 See [`src/py/`](src/py/) for the full implementation.
 
-## Key design decisions:
+### Key design decisions:
 
 ## Failure Modes
 
@@ -33,6 +39,22 @@ How this pattern itself can fail. Every solution creates new failure modes.
 | Failure Mode | Detection Signal | Mitigation |
 | ------------ | ---------------- | ---------- |
 |              |                  |            |
+
+## Observability & Operations
+
+How to know this pattern is healthy in production. What to monitor, what to alert on, and what to do when alerts fire.
+
+- **Key metrics:**
+- **Alerting:**
+- **Runbook:**
+
+## Tuning & Evolution
+
+How this pattern changes as your system matures. What signals tell you to adjust configuration, and what silent degradation looks like.
+
+- **Tuning levers:**
+- **Drift signals:**
+- **Silent degradation:**
 
 ## Cost Analysis
 
