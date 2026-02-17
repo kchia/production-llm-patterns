@@ -21,68 +21,53 @@ This is my way of consolidating and accelerating that learning. Hopefully you fi
 
 Each pattern addresses a production concern. This matrix shows which patterns matter most for each system type.
 
-| Pattern                                                                              | RAG         | Agents      | Streaming   | Batch       |
-| ------------------------------------------------------------------------------------ | ----------- | ----------- | ----------- | ----------- |
-| **Resilience**                                                                       |             |             |             |             |
-| [Graceful Degradation](patterns/resilience/graceful-degradation/)                    | Required    | Required    | Critical    | Recommended |
-| [Retry with Budget](patterns/resilience/retry-with-budget/)                          | Recommended | Required    | Required    | Required    |
-| [Multi-Provider Failover](patterns/resilience/multi-provider-failover/)              | Recommended | High ROI    | Critical    | Recommended |
-| [Circuit Breaker](patterns/resilience/circuit-breaker/)                              | Recommended | Required    | Critical    | Optional    |
-| **Cost Control**                                                                     |             |             |             |             |
-| [Token Budget Middleware](patterns/cost-control/token-budget-middleware/)            | Required    | Required    | Recommended | Required    |
-| [Semantic Caching](patterns/cost-control/semantic-caching/)                          | High ROI    | Low ROI     | N/A         | High ROI    |
-| [Model Routing](patterns/cost-control/model-routing/)                                | Recommended | High ROI    | Recommended | High ROI    |
-| [Cost Dashboard](patterns/cost-control/cost-dashboard/)                              | Recommended | Recommended | Recommended | Recommended |
-| **Observability**                                                                    |             |             |             |             |
-| [Structured Tracing](patterns/observability/structured-tracing/)                     | Required    | Critical    | Required    | Recommended |
-| [Output Quality Monitoring](patterns/observability/output-quality-monitoring/)       | Required    | Required    | Recommended | Required    |
-| [Drift Detection](patterns/observability/drift-detection/)                           | Required    | Recommended | Optional    | Required    |
-| [Prompt Diffing](patterns/observability/prompt-diffing/)                             | Recommended | Recommended | Optional    | Recommended |
-| [Prompt Version Registry](patterns/observability/prompt-version-registry/)           | Required    | Required    | Recommended | Required    |
-| [Online Eval Monitoring](patterns/observability/online-eval-monitoring/)             | Required    | Required    | Recommended | Required    |
-| **Testing**                                                                          |             |             |             |             |
-| [Eval Harness](patterns/testing/eval-harness/)                                       | Required    | Required    | Recommended | Required    |
-| [Regression Testing](patterns/testing/regression-testing/)                           | Required    | Required    | Recommended | Required    |
-| [Adversarial Inputs](patterns/testing/adversarial-inputs/)                           | Recommended | Critical    | Recommended | Optional    |
-| [Snapshot Testing](patterns/testing/snapshot-testing/)                               | Recommended | Recommended | Optional    | Recommended |
-| [Prompt Rollout Testing](patterns/testing/prompt-rollout-testing/)                   | Required    | Required    | Recommended | High ROI    |
-| **Safety**                                                                           |             |             |             |             |
-| [Structured Output Validation](patterns/safety/structured-output-validation/)        | Required    | Critical    | Required    | Required    |
-| [PII Detection](patterns/safety/pii-detection/)                                      | Required    | Required    | Required    | Required    |
-| [Prompt Injection Defense](patterns/safety/prompt-injection-defense/)                | Required    | Critical    | Required    | Recommended |
-| [Human-in-the-Loop](patterns/safety/human-in-the-loop/)                              | Optional    | Required    | N/A         | Optional    |
-| **Data Pipeline**                                                                    |             |             |             |             |
-| [Chunking Strategies](patterns/data-pipeline/chunking-strategies/)                   | Critical    | Optional    | N/A         | Recommended |
-| [Embedding Refresh](patterns/data-pipeline/embedding-refresh/)                       | Required    | Optional    | N/A         | Required    |
-| [Index Maintenance](patterns/data-pipeline/index-maintenance/)                       | Required    | Optional    | N/A         | Recommended |
-| [Context Management](patterns/data-pipeline/context-management/)                     | Recommended | Required    | Required    | Optional    |
-| **Orchestration**                                                                    |             |             |             |             |
-| [Agent Loop Guards](patterns/orchestration/agent-loop-guards/)                       | Optional    | Critical    | Recommended | Recommended |
-| [Tool Call Reliability](patterns/orchestration/tool-call-reliability/)               | Recommended | Critical    | Optional    | Recommended |
-| [State Checkpointing](patterns/orchestration/state-checkpointing/)                   | Optional    | Required    | N/A         | Critical    |
-| [Multi-Agent Routing](patterns/orchestration/multi-agent-routing/)                   | Optional    | Critical    | Optional    | Recommended |
-| **Performance**                                                                      |             |             |             |             |
-| [Latency Budget](patterns/performance/latency-budget/)                               | Required    | Recommended | Critical    | Optional    |
-| [Request Batching](patterns/performance/request-batching/)                           | High ROI    | Optional    | N/A         | Critical    |
-| [Concurrent Request Management](patterns/performance/concurrent-request-management/) | Required    | Required    | Recommended | Critical    |
-| [Streaming Backpressure](patterns/performance/streaming-backpressure/)               | Optional    | Optional    | Critical    | N/A         |
+| Pattern                        | RAG         | Agents      | Streaming   | Batch       |
+| ------------------------------ | ----------- | ----------- | ----------- | ----------- |
+| **Resilience**                 |             |             |             |             |
+| Graceful Degradation           | Required    | Required    | Critical    | Recommended |
+| Retry with Budget              | Recommended | Required    | Required    | Required    |
+| Multi-Provider Failover        | Recommended | High ROI    | Critical    | Recommended |
+| Circuit Breaker                | Recommended | Required    | Critical    | Optional    |
+| **Cost Control**               |             |             |             |             |
+| Token Budget Middleware        | Required    | Required    | Recommended | Required    |
+| Semantic Caching               | High ROI    | Low ROI     | N/A         | High ROI    |
+| Model Routing                  | Recommended | High ROI    | Recommended | High ROI    |
+| Cost Dashboard                 | Recommended | Recommended | Recommended | Recommended |
+| **Observability**              |             |             |             |             |
+| Structured Tracing             | Required    | Critical    | Required    | Recommended |
+| Output Quality Monitoring      | Required    | Required    | Recommended | Required    |
+| Drift Detection                | Required    | Recommended | Optional    | Required    |
+| Prompt Diffing                 | Recommended | Recommended | Optional    | Recommended |
+| Prompt Version Registry        | Required    | Required    | Recommended | Required    |
+| Online Eval Monitoring         | Required    | Required    | Recommended | Required    |
+| **Testing**                    |             |             |             |             |
+| Eval Harness                   | Required    | Required    | Recommended | Required    |
+| Regression Testing             | Required    | Required    | Recommended | Required    |
+| Adversarial Inputs             | Recommended | Critical    | Recommended | Optional    |
+| Snapshot Testing               | Recommended | Recommended | Optional    | Recommended |
+| Prompt Rollout Testing         | Required    | Required    | Recommended | High ROI    |
+| **Safety**                     |             |             |             |             |
+| Structured Output Validation   | Required    | Critical    | Required    | Required    |
+| PII Detection                  | Required    | Required    | Required    | Required    |
+| Prompt Injection Defense       | Required    | Critical    | Required    | Recommended |
+| Human-in-the-Loop              | Optional    | Required    | N/A         | Optional    |
+| **Data Pipeline**              |             |             |             |             |
+| Chunking Strategies            | Critical    | Optional    | N/A         | Recommended |
+| Embedding Refresh              | Required    | Optional    | N/A         | Required    |
+| Index Maintenance              | Required    | Optional    | N/A         | Recommended |
+| Context Management             | Recommended | Required    | Required    | Optional    |
+| **Orchestration**              |             |             |             |             |
+| Agent Loop Guards              | Optional    | Critical    | Recommended | Recommended |
+| Tool Call Reliability          | Recommended | Critical    | Optional    | Recommended |
+| State Checkpointing           | Optional    | Required    | N/A         | Critical    |
+| Multi-Agent Routing            | Optional    | Critical    | Optional    | Recommended |
+| **Performance**                |             |             |             |             |
+| Latency Budget                 | Required    | Recommended | Critical    | Optional    |
+| Request Batching               | High ROI    | Optional    | N/A         | Critical    |
+| Concurrent Request Management  | Required    | Required    | Recommended | Critical    |
+| Streaming Backpressure         | Optional    | Optional    | Critical    | N/A         |
 
 **Legend:** Critical = will break without it | Required = should have before production | High ROI = significant cost/reliability improvement | Recommended = good practice | Optional = context-dependent | N/A = not applicable
-
-## Pattern Structure
-
-Each pattern contains:
-
-```
-patterns/<category>/<pattern-name>/
-├── README.md              # Full pattern documentation (see PATTERN_TEMPLATE.md for structure)
-├── src/
-│   ├── ts/                # TypeScript implementation (idiomatic)
-│   └── py/                # Python implementation (idiomatic)
-├── benchmarks/results.md  # Latency, throughput, cost comparisons
-├── cost-analysis.md       # Token/dollar estimates at 1K, 10K, 100K requests/day
-└── .env.example
-```
 
 ## Pattern Categories
 
@@ -140,37 +125,71 @@ The [shared/](shared/) directory contains reusable utilities used across pattern
 
 ## Roadmap
 
-### Phase 1: Launch Set
+Patterns are published incrementally as they're completed. The navigation matrix above links to published patterns; the checklist below tracks overall progress.
+
+9 sprints, 35 patterns, ~17 weeks at 2 patterns/week.
+
+### Sprint 1: "Your System is Failing" — Launch Set (Tier 3)
 
 - [ ] Graceful Degradation
 - [ ] Structured Output Validation
 - [ ] Token Budget Middleware
 - [ ] Eval Harness
 
-### Phase 2: Depth
+### Sprint 2: "Hardening the Foundation"
 
-- [ ] Semantic Caching
+- [ ] Retry with Budget
+- [ ] Circuit Breaker
+- [ ] PII Detection
+
+### Sprint 3: "Now You Can See"
+
 - [ ] Structured Tracing
 - [ ] Multi-Provider Failover
-- [ ] Chunking Strategy Comparison
-- [ ] Agent Loop Guards
-- [ ] Latency Budget
 - [ ] Prompt Version Registry
 
-### Phase 3: Breadth
+### Sprint 4: "Measure Everything"
 
+- [ ] Regression Testing
+- [ ] Semantic Caching
+- [ ] Model Routing
+- [ ] Latency Budget
+
+### Sprint 5: "Trust But Verify"
+
+- [ ] Prompt Injection Defense
+- [ ] Output Quality Monitoring
+- [ ] Agent Loop Guards
+- [ ] Adversarial Inputs
+
+### Sprint 6: "The Data Layer"
+
+- [ ] Chunking Strategies
 - [ ] Tool Call Reliability
+- [ ] Online Eval Monitoring
+- [ ] Context Management
+
+### Sprint 7: "Scaling Up"
+
 - [ ] Concurrent Request Management
 - [ ] Prompt Rollout Testing
-- [ ] Online Eval Monitoring
 - [ ] State Checkpointing
 - [ ] Request Batching
-- [ ] Multi-Agent Routing
 - [ ] Streaming Backpressure
 
-### Phase 4: Community
+### Sprint 8: "The Long Game"
 
-- [ ] Open for contributions
+- [ ] Drift Detection
+- [ ] Embedding Refresh
+- [ ] Index Maintenance
+- [ ] Multi-Agent Routing
+
+### Sprint 9: "Completeness"
+
+- [ ] Cost Dashboard
+- [ ] Snapshot Testing
+- [ ] Human-in-the-Loop
+- [ ] Prompt Diffing
 
 ## Philosophy
 

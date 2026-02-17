@@ -12,3 +12,16 @@ venv/
 PATTERN_TEMPLATE.md
 PLAYBOOK.md
 .claude/  
+WORKFLOW.md
+CONTENT_CALENDAR.md
+brand-assets/
+
+# --- WIP pattern content (publish via: git add -f patterns/<category>/<name>/) ---
+patterns/**/README.md
+patterns/**/src/**
+!patterns/**/src/**/.gitkeep
+patterns/**/benchmarks/**
+!patterns/**/benchmarks/.gitkeep
+patterns/**/cost-analysis.md
+patterns/**/social-posts.md
+CLAUDE.md
