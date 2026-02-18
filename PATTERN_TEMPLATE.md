@@ -16,6 +16,12 @@ Signals that this pattern belongs in your system. What symptoms or scale thresho
 
 -
 
+**Priority by system type** (from the [Navigation Matrix](../../README.md#navigation-matrix)):
+
+Why each system type gets its designation. One bullet per system type, ordered by severity.
+
+-
+
 ## The Pattern
 
 ### Architecture

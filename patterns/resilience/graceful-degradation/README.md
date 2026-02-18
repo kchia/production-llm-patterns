@@ -33,6 +33,13 @@ What's missing in both cases: the system has no concept of _quality tiers_. It d
 - RAG or agent workflows where a single failed LLM call breaks a multi-step pipeline
 - The cost of a wrong-but-reasonable response is lower than the cost of no response at all
 
+**Priority by system type** (from the [Navigation Matrix](../../../README.md#navigation-matrix)):
+
+- **Streaming → Critical.** A dropped stream is immediately visible — the user watches the response die mid-sentence. There's no retry window once tokens are flowing. Without degradation tiers, any provider hiccup means a broken connection, and that's an outage. I'd want this in place before the first user connects.
+- **RAG → Required.** By the time generation fails, retrieval has already done its work. Without degradation, that retrieved context gets thrown away and the user gets nothing. A cached or simpler response using the same retrieved context is still useful. Not critical because the failure isn't as immediately catastrophic — but I wouldn't want to get paged without it.
+- **Agents → Required.** Agent loops depend on LLM calls at every step. A provider blip mid-loop kills the multi-step task. But agents can often checkpoint or restart from a known state — the work isn't lost, just interrupted. Same reasoning as RAG: I'd want this before production, but the system won't break the way a stream does.
+- **Batch → Recommended.** No user is waiting. When a provider goes down, the job pauses, checkpoints, and resumes later. Retry logic and checkpointing cover most of the same failure scenarios. Degradation tiers add value — a cheaper model might handle some items acceptably — but the urgency is lower. I'd notice the gap by month six, not day one.
+
 ## The Pattern
 
 ### Architecture
