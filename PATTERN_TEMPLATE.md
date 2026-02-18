@@ -26,13 +26,9 @@ Signals that this pattern belongs in your system. What symptoms or scale thresho
 
 See [`src/ts/`](src/ts/) for the full implementation.
 
-### Key design decisions:
-
 ### Python Implementation
 
 See [`src/py/`](src/py/) for the full implementation.
-
-### Key design decisions:
 
 ## Failure Modes
 
@@ -82,7 +78,7 @@ Boundary conditions and honest uncertainty. This pattern is not universally corr
 
 -
 
-## Companion Content
+<!-- ## Companion Content
 
 - Blog post: [Title](link) -- deeper reasoning on why this pattern matters
-- Related patterns: [Pattern Name](link)
+- Related patterns: [Pattern Name](link) -->

@@ -35,6 +35,7 @@ class DegradationChain:
         on_degradation: Callable[[DegradationResult], None] | None = None,
     ) -> None:
         if not tiers:
+            # ValueError: Python convention for invalid constructor arguments
             raise ValueError("DegradationChain requires at least one tier")
 
         self._tiers = tiers
@@ -47,6 +48,7 @@ class DegradationChain:
 
         Walks tiers in order until one succeeds or all are exhausted.
         """
+        # perf_counter: monotonic, high-resolution (vs time.time() which drifts with NTP)
         chain_start = time.perf_counter()
         attempts: list[TierAttempt] = []
 
@@ -96,6 +98,7 @@ class DegradationChain:
             effective_timeout_ms = min(tier.timeout_ms, remaining_global_ms)
 
             try:
+                # wait_for cancels the underlying task on timeout — no resource leaks
                 response = await asyncio.wait_for(
                     tier.handler(request),
                     timeout=effective_timeout_ms / 1000,

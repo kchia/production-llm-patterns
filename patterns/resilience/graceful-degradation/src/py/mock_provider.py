@@ -86,7 +86,7 @@ def create_cache_handler() -> CacheHandler:
 
 
 def create_rule_based_handler(
-    rules: list[tuple[re.Pattern[str], str]],
+    rules: list[tuple[re.Pattern[str], str]],  # compiled regex avoids recompilation per call
 ):
     """Creates a rule-based handler that matches prompts against regex patterns."""
 

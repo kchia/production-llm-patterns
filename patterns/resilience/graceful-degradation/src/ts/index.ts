@@ -137,6 +137,9 @@ export class DegradationChain {
 /**
  * Wraps a promise with a timeout.
  * Rejects with "Operation timed out" if the promise doesn't resolve in time.
+ *
+ * Uses setTimeout+clearTimeout instead of Promise.race to avoid leaking
+ * the original promise (Promise.race doesn't cancel the losing promise).
  */
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   if (ms <= 0) {

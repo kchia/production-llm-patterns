@@ -14,7 +14,7 @@ A 2024 Forrester study found that 71% of enterprises have no documented degradat
 
 ## What I Would Not Do
 
-The first thing most teams reach for is wrapping every LLM call in a try/catch with a generic error message: "Sorry, something went wrong. Please try again." This feels reasonable but creates two problems.
+It could be tempting every LLM call in a try/catch with a generic error message: "Sorry, something went wrong. Please try again." This feels reasonable but creates two problems.
 
 First, it's a lie. The user retries, hits the same outage, and loses trust. If the provider is down for four hours, "try again" is actively harmful advice.
 
@@ -27,7 +27,7 @@ What's missing in both cases: the system has no concept of _quality tiers_. It d
 ## When You Need This
 
 - The system has any user-facing latency SLA — degraded responses within SLA beat perfect responses after a timeout
-- External LLM APIs are a hard dependency and uptime isn't guaranteed (it isn't — OpenAI's status page shows multiple incidents per month)
+- External LLM APIs are a hard dependency and uptime isn't guaranteed
 - There's been at least one incident where a provider outage took an entire feature offline
 - Streaming use cases where dropped connections cascade immediately to the user
 - RAG or agent workflows where a single failed LLM call breaks a multi-step pipeline
@@ -80,6 +80,8 @@ The core idea: replace the binary "works or doesn't" with an ordered chain of qu
         └──────────────────────────────────────────┘
 ```
 
+Quality scores shown are illustrative — actual values depend on the use case and how well each tier covers it.
+
 **Core abstraction** — the `DegradationChain`:
 
 ```typescript
@@ -113,47 +115,27 @@ The chain accepts an ordered array of tiers and walks them sequentially. If a ti
 | `onDegradation`         | `undefined`       | Callback fired when response comes from a non-primary tier |
 | `healthCheckIntervalMs` | `30000` (30s)     | How often to re-check unhealthy tiers                      |
 
+These defaults are starting points. Actual values depend on provider latency characteristics, user-facing SLA requirements, and how quickly the underlying data changes.
+
 **Key design tradeoffs:**
 
-1. **Sequential chain vs. parallel racing** — The chain walks tiers in order rather than racing them in parallel. Parallel racing would be faster in degraded scenarios but wastes resources when the primary is healthy (which is the vast majority of the time). Sequential also makes the quality semantics clearer — the first tier that succeeds wins.
-
-2. **Quality scores as numbers vs. enums** — Numbers (0.0–1.0) rather than fixed levels like "high/medium/low". This lets consumers make their own quality decisions (e.g., "don't show responses below 0.3 in the main UI, but they're fine for autocomplete suggestions").
-
-3. **Per-tier timeouts vs. global-only timeout** — Both. Each tier gets its own timeout so a slow fallback provider doesn't eat into cache/rule-based time. The global timeout acts as a safety net across the full chain.
-
-4. **Health check skip vs. always-try** — If a tier reports `isHealthy() === false`, the chain skips it entirely without attempting a call. This avoids wasting time on providers that are known to be down. The circuit re-checks on a configurable interval.
-
-5. **Partial responses** — A tier either succeeds fully or fails. There's no "partial success" state in this design. If a provider returns a truncated or malformed response, the handler is responsible for deciding whether that counts as success or failure. This keeps the chain logic simple — each tier's handler encapsulates its own definition of "good enough."
-
-6. **Cross-tier data consistency** — Different tiers may return different formats or levels of detail. The `DegradationResult` metadata (tier, quality, degraded) lets consumers adapt their UI or processing accordingly. The chain doesn't enforce response format consistency across tiers — that's the caller's responsibility, because the right adaptation depends on the use case.
-
-7. **Security across providers** — When using multiple providers as fallback tiers, each sees the request content. If requests contain sensitive data, all providers in the chain need to meet the same data handling requirements. The tier configuration doesn't enforce this — it's an operational concern that needs to be validated during setup, not at runtime.
+| Decision                                  | Choice                                       | Rationale                                                                                                                                                                                        |
+| ----------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Sequential chain vs. parallel racing      | Sequential — first tier that succeeds wins   | Parallel racing would be faster in degraded scenarios but wastes resources when the primary is healthy (the vast majority of the time). Sequential also makes the quality semantics clearer.     |
+| Quality scores as numbers vs. enums       | Numbers (0.0–1.0)                            | Lets consumers make their own quality decisions (e.g., "don't show responses below 0.3 in the main UI, but they're fine for autocomplete suggestions").                                          |
+| Per-tier timeouts vs. global-only timeout | Both                                         | Each tier gets its own timeout so a slow fallback provider doesn't eat into cache/rule-based time. The global timeout acts as a safety net across the full chain.                                |
+| Health check skip vs. always-try          | Skip if unhealthy                            | If `isHealthy() === false`, the chain skips the tier entirely without attempting a call. Avoids wasting time on providers known to be down. The circuit re-checks on a configurable interval.    |
+| Partial responses                         | Full success or fail — no partial state      | The handler decides whether a truncated or malformed response counts as success or failure. Keeps the chain logic simple — each tier's handler encapsulates its own definition of "good enough." |
+| Cross-tier data consistency               | Not enforced by the chain                    | Different tiers may return different formats or levels of detail. `DegradationResult` metadata (tier, quality, degraded) lets consumers adapt. The right adaptation depends on the use case.     |
+| Security across providers                 | Operational concern, not runtime enforcement | Each provider in the chain sees request content. If requests contain sensitive data, all providers need to meet the same data handling requirements. Validate during setup, not at runtime.      |
 
 ### TypeScript Implementation
 
 See [`src/ts/`](src/ts/) for the full implementation.
 
-### Key design decisions:
-
-- **`DegradationChain` class** — single entry point, constructed with config, exposes `execute(request)`. No global state.
-- **`withTimeout` utility** — wraps any promise with a timeout. Uses `setTimeout` + `clearTimeout` to avoid dangling timers. Returns a clean rejection rather than racing with `Promise.race` (which leaks the original promise).
-- **`AllTiersExhaustedError`** — custom error class with `attempts` array. Every tier that was tried gets recorded with status, latency, and error message, making debugging straightforward.
-- **Mock provider** — `MockProvider` class with configurable latency, failure rate, tokens, and model name. Separate factory functions for cache, rule-based, and static handlers so each tier type has its own creation pattern.
-- **Zero external dependencies** — only `vitest` as a dev dependency. All timer, promise, and error logic is stdlib.
-
 ### Python Implementation
 
 See [`src/py/`](src/py/) for the full implementation.
-
-### Key design decisions:
-
-- **Dataclasses over TypedDict** — `LLMRequest`, `LLMResponse`, `DegradationTier`, etc. are all `@dataclass`. Dataclasses provide defaults, type hints, and `__init__` generation — cleaner than dicts with string keys, more Pythonic than plain classes with manual `__init__`.
-- **`asyncio.wait_for()` for timeouts** — Python's stdlib provides `asyncio.wait_for()` which cancels the underlying task on timeout. This is cleaner than the JS approach (racing a timer against the promise) and avoids resource leaks. The tradeoff: `asyncio` has higher per-call overhead (~0.05ms vs ~0.001ms in Node), but this is negligible against real LLM latencies.
-- **`time.perf_counter()` for latency** — High-resolution monotonic clock, the Python equivalent of `performance.now()`. Returns seconds (not ms), so the chain multiplies by 1000 for consistency with the TypeScript output format.
-- **`Callable` types for handlers** — Tier handlers are typed as `Callable[[LLMRequest], Awaitable[LLMResponse]]` rather than using a protocol or ABC. This keeps the API simple — any async function with the right signature works.
-- **`re.Pattern` for rules** — The rule-based handler takes compiled `re.Pattern` objects instead of raw strings. This is idiomatic Python and avoids recompilation on every call.
-- **`ValueError` instead of `Error`** — Constructor validation raises `ValueError` (not a generic `Exception`), following Python's convention for invalid arguments.
-- **`import_mode = "importlib"` in pytest config** — Required because the package directory `src/py/` shadows the `py` library that pytest depends on. This is a known naming collision; the importlib mode avoids the conflict.
 
 ## Failure Modes
 
@@ -174,21 +156,29 @@ Every degradation layer introduces its own failure modes. The pattern that's sup
 ## Observability & Operations
 
 - **Key metrics:**
-  - `degradation.tier_served` — counter per tier name. The primary signal. Track the distribution over time: what percentage of requests are served by each tier?
-  - `degradation.quality_score` — histogram of quality scores per response. A healthy system clusters near 1.0; a degrading system spreads downward.
-  - `degradation.latency_ms` — histogram of total chain execution time (not per-tier). Includes time spent on failed tiers before the successful one.
-  - `degradation.tier_attempt_count` — how many tiers were attempted per request. Normally 1 (primary succeeded). Rising average means degradation is happening.
-  - `degradation.all_tiers_exhausted` — counter of `AllTiersExhaustedError` events. This is the "system is fully broken" metric.
-  - `degradation.cache_age_seconds` — histogram of cache entry age at time of serving. Tracks freshness of cached responses.
-  - `degradation.health_check_state` — gauge per tier (0 = healthy, 1 = unhealthy). Lets dashboards show which tiers are currently in circuit-open state.
+
+| Metric                            | Description                                                                                                                       |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `degradation.tier_served`         | Counter per tier name. The primary signal. Track the distribution over time: what percentage of requests are served by each tier? |
+| `degradation.quality_score`       | Histogram of quality scores per response. A healthy system clusters near 1.0; a degrading system spreads downward.                |
+| `degradation.latency_ms`          | Histogram of total chain execution time (not per-tier). Includes time spent on failed tiers before the successful one.            |
+| `degradation.tier_attempt_count`  | How many tiers were attempted per request. Normally 1 (primary succeeded). Rising average means degradation is happening.         |
+| `degradation.all_tiers_exhausted` | Counter of `AllTiersExhaustedError` events. This is the "system is fully broken" metric.                                          |
+| `degradation.cache_age_seconds`   | Histogram of cache entry age at time of serving. Tracks freshness of cached responses.                                            |
+| `degradation.health_check_state`  | Gauge per tier (0 = healthy, 1 = unhealthy). Lets dashboards show which tiers are currently in circuit-open state.                |
 
 - **Alerting:**
-  - **Warning:** Primary tier percentage drops below 90% over a 5-minute window. Something is pushing traffic to fallback tiers.
-  - **Warning:** Average cache age exceeds 2x the configured TTL. Stale responses may be in circulation.
-  - **Warning (low-side):** Degradation rate drops to 0% when it was previously >0%. Could indicate a monitoring gap or a health check misconfiguration.
-  - **Critical:** Primary tier percentage drops below 70% over a 5-minute window. Significant quality impact.
-  - **Critical:** `all_tiers_exhausted` count > 0 in any 1-minute window. The system is returning errors.
-  - **Critical (high-side):** Degradation rate spikes to >50% without a corresponding provider incident alert. Possible health check false positive.
+
+| Severity             | Condition                                                                       | What It Means                                                      |
+| -------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Warning              | Primary tier percentage drops below 90% over a 5-minute window                  | Something is pushing traffic to fallback tiers                     |
+| Warning              | Average cache age exceeds 2x the configured TTL                                 | Stale responses may be in circulation                              |
+| Warning (low-side)   | Degradation rate drops to 0% when it was previously >0%                         | Could indicate a monitoring gap or a health check misconfiguration |
+| Critical             | Primary tier percentage drops below 70% over a 5-minute window                  | Significant quality impact                                         |
+| Critical             | `all_tiers_exhausted` count > 0 in any 1-minute window                          | The system is returning errors                                     |
+| Critical (high-side) | Degradation rate spikes to >50% without a corresponding provider incident alert | Possible health check false positive                               |
+
+These thresholds are starting points calibrated for a system serving user-facing traffic with moderate latency sensitivity. Adjust based on baseline tier distribution, SLA requirements, and tolerance for degraded responses.
 
 - **Runbook:**
   1. **Check first:** Is the primary provider actually down? Cross-reference with the provider's status page and external monitoring. If the provider is healthy but `isHealthy()` shows it as down, it's a health check false positive — review the health check threshold.
@@ -200,11 +190,14 @@ Every degradation layer introduces its own failure modes. The pattern that's sup
 ## Tuning & Evolution
 
 - **Tuning levers:**
-  - `timeoutMs` (per-tier) — **Safe range: 100ms–5000ms.** Too low: healthy providers get timed out unnecessarily. Too high: failed tiers eat into the global timeout budget and increase latency for degraded requests. Start at 2x the provider's p95 latency and tune down.
-  - `globalTimeoutMs` — **Safe range: 1000ms–10000ms.** This is the hard ceiling on how long a request can take. Set it at or below the user-facing SLA. **Dangerous extreme:** <500ms risks timing out even healthy primary calls; >15000ms means users are waiting 15+ seconds in worst case.
-  - `minQuality` — **Safe range: 0.0–0.5.** At 0.0, any response is better than none. At 0.5, only cache-or-better tiers are acceptable. **Dangerous extreme:** >0.7 effectively disables most fallback tiers, turning the pattern back into a binary success/fail.
-  - `cacheTtlMs` — **Safe range: 60000–3600000 (1 min – 1 hour).** Depends on how fast the underlying data changes. For static content, longer TTLs are fine. For real-time data, shorter. **Dangerous extreme:** >24 hours risks serving day-old responses during outages.
-  - `healthCheckIntervalMs` — **Safe range: 10000–120000 (10s – 2 min).** Too frequent: unnecessary probe traffic to a recovering provider. Too infrequent: the circuit stays open long after the provider recovers. **Start at 30s**, adjust based on provider recovery patterns.
+
+| Parameter               | Safe Range                     | Purpose                                                                                                                | Dangerous Extreme                                                                                                                                            |
+| ----------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `timeoutMs` (per-tier)  | 100ms–5000ms                   | Start at 2x the provider's p95 latency and tune down                                                                   | Too low: healthy providers get timed out unnecessarily. Too high: failed tiers eat into the global timeout budget and increase latency for degraded requests |
+| `globalTimeoutMs`       | 1000ms–10000ms                 | Hard ceiling on how long a request can take. Set it at or below the user-facing SLA                                    | <500ms risks timing out even healthy primary calls; >15000ms means users are waiting 15+ seconds in worst case                                               |
+| `minQuality`            | 0.0–0.5                        | At 0.0, any response is better than none. At 0.5, only cache-or-better tiers are acceptable                            | >0.7 effectively disables most fallback tiers, turning the pattern back into a binary success/fail                                                           |
+| `cacheTtlMs`            | 60000–3600000 (1 min – 1 hour) | Depends on how fast the underlying data changes. For static content, longer TTLs are fine. For real-time data, shorter | >24 hours risks serving day-old responses during outages                                                                                                     |
+| `healthCheckIntervalMs` | 10000–120000 (10s – 2 min)     | Controls re-check frequency for unhealthy tiers. Start at 30s, adjust based on provider recovery patterns              | Too frequent: unnecessary probe traffic to a recovering provider. Too infrequent: the circuit stays open long after the provider recovers                    |
 
 - **Drift signals (review quarterly):**
   - Primary tier success rate dropping below 95% over a 30-day window — investigate whether provider reliability has changed or thresholds need adjustment
@@ -247,7 +240,7 @@ See test files in `src/ts/__tests__/index.test.ts`. Run with `cd src/ts && npm t
 - **Very low traffic** — at 100 req/day, the probability of hitting a provider outage during active use is low enough that the complexity overhead doesn't pay for itself
 - **Single-model features with no reasonable fallback** — some capabilities genuinely can't degrade. If the entire value proposition requires GPT-4-level reasoning, a cached response or rule-based fallback isn't a degradation — it's a different product
 
-## Companion Content
+<!-- ## Companion Content
 
 - Blog post: [Graceful Degradation — Deep Dive](https://prompt-deploy.com/graceful-degradation) (coming soon)
 - Related patterns:
@@ -255,4 +248,4 @@ See test files in `src/ts/__tests__/index.test.ts`. Run with `cd src/ts && npm t
   - [Circuit Breaker](../circuit-breaker/) (#6, S2) — decides when to stop trying and trigger degradation
   - [Multi-Provider Failover](../multi-provider-failover/) (#9, S3) — an alternative to degradation: try a different provider
   - [Latency Budget](../../performance/latency-budget/) (#14, S4) — time constraints that trigger degradation decisions
-  - [Structured Output Validation](../../safety/structured-output-validation/) (#2, S1) — validates responses before caching, preventing cache poisoning
+  - [Structured Output Validation](../../safety/structured-output-validation/) (#2, S1) — validates responses before caching, preventing cache poisoning -->
