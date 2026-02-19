@@ -56,51 +56,51 @@ These four system types represent distinct operational profiles — each creates
 
 > **Why these four?** They represent operational profiles. Each one creates a distinct combination of failure modes, latency constraints, and cost pressures that changes which patterns matter most. A customer-facing chatbot is a Streaming system. A document Q&A product is RAG. A coding assistant that calls tools is an Agent. Most real systems combine two or more profiles — an agentic RAG system would check both the RAG and Agents columns.
 
-| Pattern                                                           | RAG         | Agents      | Streaming   | Batch       |
-| ----------------------------------------------------------------- | ----------- | ----------- | ----------- | ----------- |
-| **Resilience**                                                    |             |             |             |             |
-| [Graceful Degradation](patterns/resilience/graceful-degradation/) | Required    | Required    | Critical    | Recommended |
-| Retry with Budget                                                 | Recommended | Required    | Required    | Required    |
-| Multi-Provider Failover                                           | Recommended | High ROI    | Critical    | Recommended |
-| Circuit Breaker                                                   | Recommended | Required    | Critical    | Optional    |
-| **Cost Control**                                                  |             |             |             |             |
-| Token Budget Middleware                                           | Required    | Required    | Recommended | Required    |
-| Semantic Caching                                                  | High ROI    | Low ROI     | N/A         | High ROI    |
-| Model Routing                                                     | Recommended | High ROI    | Recommended | High ROI    |
-| Cost Dashboard                                                    | Recommended | Recommended | Recommended | Recommended |
-| **Observability**                                                 |             |             |             |             |
-| Structured Tracing                                                | Required    | Critical    | Required    | Recommended |
-| Output Quality Monitoring                                         | Required    | Required    | Recommended | Required    |
-| Drift Detection                                                   | Required    | Recommended | Optional    | Required    |
-| Prompt Diffing                                                    | Recommended | Recommended | Optional    | Recommended |
-| Prompt Version Registry                                           | Required    | Required    | Recommended | Required    |
-| Online Eval Monitoring                                            | Required    | Required    | Recommended | Required    |
-| **Testing**                                                       |             |             |             |             |
-| Eval Harness                                                      | Required    | Required    | Recommended | Required    |
-| Regression Testing                                                | Required    | Required    | Recommended | Required    |
-| Adversarial Inputs                                                | Recommended | Critical    | Recommended | Optional    |
-| Snapshot Testing                                                  | Recommended | Recommended | Optional    | Recommended |
-| Prompt Rollout Testing                                            | Required    | Required    | Recommended | High ROI    |
-| **Safety**                                                        |             |             |             |             |
-| Structured Output Validation                                      | Required    | Critical    | Required    | Required    |
-| PII Detection                                                     | Required    | Required    | Required    | Required    |
-| Prompt Injection Defense                                          | Required    | Critical    | Required    | Recommended |
-| Human-in-the-Loop                                                 | Optional    | Required    | N/A         | Optional    |
-| **Data Pipeline**                                                 |             |             |             |             |
-| Chunking Strategies                                               | Critical    | Optional    | N/A         | Recommended |
-| Embedding Refresh                                                 | Required    | Optional    | N/A         | Required    |
-| Index Maintenance                                                 | Required    | Optional    | N/A         | Recommended |
-| Context Management                                                | Recommended | Required    | Required    | Optional    |
-| **Orchestration**                                                 |             |             |             |             |
-| Agent Loop Guards                                                 | Optional    | Critical    | Recommended | Recommended |
-| Tool Call Reliability                                             | Recommended | Critical    | Optional    | Recommended |
-| State Checkpointing                                               | Optional    | Required    | N/A         | Critical    |
-| Multi-Agent Routing                                               | Optional    | Critical    | Optional    | Recommended |
-| **Performance**                                                   |             |             |             |             |
-| Latency Budget                                                    | Required    | Recommended | Critical    | Optional    |
-| Request Batching                                                  | High ROI    | Optional    | N/A         | Critical    |
-| Concurrent Request Management                                     | Required    | Required    | Recommended | Critical    |
-| Streaming Backpressure                                            | Optional    | Optional    | Critical    | N/A         |
+| Pattern                                                                       | RAG         | Agents      | Streaming   | Batch       |
+| ----------------------------------------------------------------------------- | ----------- | ----------- | ----------- | ----------- |
+| **Resilience**                                                                |             |             |             |             |
+| [Graceful Degradation](patterns/resilience/graceful-degradation/)             | Required    | Required    | Critical    | Recommended |
+| Retry with Budget                                                             | Recommended | Required    | Required    | Required    |
+| Multi-Provider Failover                                                       | Recommended | High ROI    | Critical    | Recommended |
+| Circuit Breaker                                                               | Recommended | Required    | Critical    | Optional    |
+| **Cost Control**                                                              |             |             |             |             |
+| Token Budget Middleware                                                       | Required    | Required    | Recommended | Required    |
+| Semantic Caching                                                              | High ROI    | Low ROI     | N/A         | High ROI    |
+| Model Routing                                                                 | Recommended | High ROI    | Recommended | High ROI    |
+| Cost Dashboard                                                                | Recommended | Recommended | Recommended | Recommended |
+| **Observability**                                                             |             |             |             |             |
+| Structured Tracing                                                            | Required    | Critical    | Required    | Recommended |
+| Output Quality Monitoring                                                     | Required    | Required    | Recommended | Required    |
+| Drift Detection                                                               | Required    | Recommended | Optional    | Required    |
+| Prompt Diffing                                                                | Recommended | Recommended | Optional    | Recommended |
+| Prompt Version Registry                                                       | Required    | Required    | Recommended | Required    |
+| Online Eval Monitoring                                                        | Required    | Required    | Recommended | Required    |
+| **Testing**                                                                   |             |             |             |             |
+| Eval Harness                                                                  | Required    | Required    | Recommended | Required    |
+| Regression Testing                                                            | Required    | Required    | Recommended | Required    |
+| Adversarial Inputs                                                            | Recommended | Critical    | Recommended | Optional    |
+| Snapshot Testing                                                              | Recommended | Recommended | Optional    | Recommended |
+| Prompt Rollout Testing                                                        | Required    | Required    | Recommended | High ROI    |
+| **Safety**                                                                    |             |             |             |             |
+| [Structured Output Validation](patterns/safety/structured-output-validation/) | Required    | Critical    | Required    | Required    |
+| PII Detection                                                                 | Required    | Required    | Required    | Required    |
+| Prompt Injection Defense                                                      | Required    | Critical    | Required    | Recommended |
+| Human-in-the-Loop                                                             | Optional    | Required    | N/A         | Optional    |
+| **Data Pipeline**                                                             |             |             |             |             |
+| Chunking Strategies                                                           | Critical    | Optional    | N/A         | Recommended |
+| Embedding Refresh                                                             | Required    | Optional    | N/A         | Required    |
+| Index Maintenance                                                             | Required    | Optional    | N/A         | Recommended |
+| Context Management                                                            | Recommended | Required    | Required    | Optional    |
+| **Orchestration**                                                             |             |             |             |             |
+| Agent Loop Guards                                                             | Optional    | Critical    | Recommended | Recommended |
+| Tool Call Reliability                                                         | Recommended | Critical    | Optional    | Recommended |
+| State Checkpointing                                                           | Optional    | Required    | N/A         | Critical    |
+| Multi-Agent Routing                                                           | Optional    | Critical    | Optional    | Recommended |
+| **Performance**                                                               |             |             |             |             |
+| Latency Budget                                                                | Required    | Recommended | Critical    | Optional    |
+| Request Batching                                                              | High ROI    | Optional    | N/A         | Critical    |
+| Concurrent Request Management                                                 | Required    | Required    | Recommended | Critical    |
+| Streaming Backpressure                                                        | Optional    | Optional    | Critical    | N/A         |
 
 **Legend — how these designations work:**
 
