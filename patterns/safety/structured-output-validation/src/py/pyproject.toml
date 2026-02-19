@@ -1,0 +1,18 @@
+[project]
+name = "structured-output-validation"
+version = "0.1.0"
+description = "Parse -> Repair -> Validate -> Retry pipeline for LLM structured output"
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+# importlib mode avoids the 'py' directory name collision with pytest's
+# internal 'py' dependency. Required when running from within src/py/.
+import_mode = "importlib"
