@@ -64,7 +64,7 @@ These four system types represent distinct operational profiles — each creates
 | Multi-Provider Failover                                                       | Recommended | High ROI    | Critical    | Recommended |
 | Circuit Breaker                                                               | Recommended | Required    | Critical    | Optional    |
 | **Cost Control**                                                              |             |             |             |             |
-| Token Budget Middleware                                                       | Required    | Required    | Recommended | Required    |
+| [Token Budget Middleware](patterns/cost-control/token-budget-middleware/)      | Required    | Required    | Recommended | Required    |
 | Semantic Caching                                                              | High ROI    | Low ROI     | N/A         | High ROI    |
 | Model Routing                                                                 | Recommended | High ROI    | Recommended | High ROI    |
 | Cost Dashboard                                                                | Recommended | Recommended | Recommended | Recommended |
