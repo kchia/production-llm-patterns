@@ -9,4 +9,9 @@ build/
 *.log
 .venv/
 venv/
-.pytest_cache/
+
+# Claude local/session files (machine-specific, not shareable)
+.claude/settings.local.json
+.claude/memory/
+.claude/plans/
+.claude/worktrees/
