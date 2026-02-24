@@ -76,7 +76,7 @@ These four system types represent distinct operational profiles — each creates
 | Prompt Version Registry                                                       | Required    | Required    | Recommended | Required    |
 | Online Eval Monitoring                                                        | Required    | Required    | Recommended | Required    |
 | **Testing**                                                                   |             |             |             |             |
-| Eval Harness                                                                  | Required    | Required    | Recommended | Required    |
+| [Eval Harness](patterns/testing/eval-harness/)                                | Required    | Required    | Recommended | Required    |
 | Regression Testing                                                            | Required    | Required    | Recommended | Required    |
 | Adversarial Inputs                                                            | Recommended | Critical    | Recommended | Optional    |
 | Snapshot Testing                                                              | Recommended | Recommended | Optional    | Recommended |
