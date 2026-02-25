@@ -60,7 +60,7 @@ These four system types represent distinct operational profiles — each creates
 | ----------------------------------------------------------------------------- | ----------- | ----------- | ----------- | ----------- |
 | **Resilience**                                                                |             |             |             |             |
 | [Graceful Degradation](patterns/resilience/graceful-degradation/)             | Required    | Required    | Critical    | Recommended |
-| Retry with Budget                                                             | Recommended | Required    | Required    | Required    |
+| [Retry with Budget](patterns/resilience/retry-with-budget/)                   | Recommended | Required    | Required    | Required    |
 | Multi-Provider Failover                                                       | Recommended | High ROI    | Critical    | Recommended |
 | Circuit Breaker                                                               | Recommended | Required    | Critical    | Optional    |
 | **Cost Control**                                                              |             |             |             |             |

@@ -1,0 +1,17 @@
+[project]
+name = "retry-with-budget"
+version = "0.1.0"
+description = "Retry with Budget — production LLM pattern"
+requires-python = ">=3.11"
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[tool.mypy]
+strict = true
