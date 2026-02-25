@@ -1,6 +1,6 @@
 # Retry with Budget
 
-> **Part of [Production LLM Patterns](../../README.md).** Each pattern covers a specific production concern with architecture, dual implementations (TypeScript + Python), failure modes, cost analysis, and operational guidance. [How to read a pattern →](../../README.md#if-you-landed-on-a-specific-pattern)
+> **Part of [Production LLM Patterns](../../../README.md).** Each pattern covers a specific production concern with architecture, dual implementations (TypeScript + Python), failure modes, cost analysis, and operational guidance. [How to read a pattern →](../../../README.md#if-you-landed-on-a-specific-pattern)
 
 ## The Problem
 
