@@ -62,7 +62,7 @@ These four system types represent distinct operational profiles — each creates
 | [Graceful Degradation](patterns/resilience/graceful-degradation/)             | Required    | Required    | Critical    | Recommended |
 | [Retry with Budget](patterns/resilience/retry-with-budget/)                   | Recommended | Required    | Required    | Required    |
 | Multi-Provider Failover                                                       | Recommended | High ROI    | Critical    | Recommended |
-| Circuit Breaker                                                               | Recommended | Required    | Critical    | Optional    |
+| [Circuit Breaker](patterns/resilience/circuit-breaker/)                       | Recommended | Required    | Critical    | Optional    |
 | **Cost Control**                                                              |             |             |             |             |
 | [Token Budget Middleware](patterns/cost-control/token-budget-middleware/)      | Required    | Required    | Recommended | Required    |
 | Semantic Caching                                                              | High ROI    | Low ROI     | N/A         | High ROI    |
