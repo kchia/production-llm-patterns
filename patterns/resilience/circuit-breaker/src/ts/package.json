@@ -1,0 +1,18 @@
+{
+  "name": "circuit-breaker",
+  "version": "1.0.0",
+  "description": "Circuit breaker pattern for LLM provider protection — sliding window failure tracking with three-state machine",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  }
+}
