@@ -83,7 +83,7 @@ These four system types represent distinct operational profiles — each creates
 | Prompt Rollout Testing                                                        | Required    | Required    | Recommended | High ROI    |
 | **Safety**                                                                    |             |             |             |             |
 | [Structured Output Validation](patterns/safety/structured-output-validation/) | Required    | Critical    | Required    | Required    |
-| PII Detection                                                                 | Required    | Required    | Required    | Required    |
+| [PII Detection](patterns/safety/pii-detection/)                               | Required    | Required    | Required    | Required    |
 | Prompt Injection Defense                                                      | Required    | Critical    | Required    | Recommended |
 | Human-in-the-Loop                                                             | Optional    | Required    | N/A         | Optional    |
 | **Data Pipeline**                                                             |             |             |             |             |
