@@ -1,0 +1,10 @@
+[project]
+name = "structured-tracing"
+version = "0.1.0"
+description = "Lightweight, framework-agnostic tracing for LLM pipelines"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = ["--import-mode=importlib"]
