@@ -69,7 +69,7 @@ These four system types represent distinct operational profiles — each creates
 | Model Routing                                                                 | Recommended | High ROI    | Recommended | High ROI    |
 | Cost Dashboard                                                                | Recommended | Recommended | Recommended | Recommended |
 | **Observability**                                                             |             |             |             |             |
-| Structured Tracing                                                            | Required    | Critical    | Required    | Recommended |
+| [Structured Tracing](patterns/observability/structured-tracing/)              | Required    | Critical    | Required    | Recommended |
 | Output Quality Monitoring                                                     | Required    | Required    | Recommended | Required    |
 | Drift Detection                                                               | Required    | Recommended | Optional    | Required    |
 | Prompt Diffing                                                                | Recommended | Recommended | Optional    | Recommended |
