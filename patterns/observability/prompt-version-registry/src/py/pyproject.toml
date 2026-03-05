@@ -1,0 +1,8 @@
+[project]
+name = "prompt-version-registry"
+version = "1.0.0"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+import_mode = "importlib"

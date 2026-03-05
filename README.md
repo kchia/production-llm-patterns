@@ -73,7 +73,7 @@ These four system types represent distinct operational profiles — each creates
 | Output Quality Monitoring                                                     | Required    | Required    | Recommended | Required    |
 | Drift Detection                                                               | Required    | Recommended | Optional    | Required    |
 | Prompt Diffing                                                                | Recommended | Recommended | Optional    | Recommended |
-| Prompt Version Registry                                                       | Required    | Required    | Recommended | Required    |
+| [Prompt Version Registry](patterns/observability/prompt-version-registry/)     | Required    | Required    | Recommended | Required    |
 | Online Eval Monitoring                                                        | Required    | Required    | Recommended | Required    |
 | **Testing**                                                                   |             |             |             |             |
 | [Eval Harness](patterns/testing/eval-harness/)                                | Required    | Required    | Recommended | Required    |
