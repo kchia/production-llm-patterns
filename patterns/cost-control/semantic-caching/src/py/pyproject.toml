@@ -1,0 +1,12 @@
+[project]
+name = "semantic-caching"
+version = "1.0.0"
+description = "Semantic caching pattern for LLM systems — cache responses by meaning"
+requires-python = ">=3.11"
+
+[project.optional-dependencies]
+test = ["pytest>=7.0", "pytest-asyncio>=0.21"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+addopts = "--import-mode=importlib"

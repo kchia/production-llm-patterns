@@ -65,7 +65,7 @@ These four system types represent distinct operational profiles — each creates
 | [Circuit Breaker](patterns/resilience/circuit-breaker/)                       | Recommended | Required    | Critical    | Optional    |
 | **Cost Control**                                                              |             |             |             |             |
 | [Token Budget Middleware](patterns/cost-control/token-budget-middleware/)      | Required    | Required    | Recommended | Required    |
-| Semantic Caching                                                              | High ROI    | Low ROI     | N/A         | High ROI    |
+| [Semantic Caching](patterns/cost-control/semantic-caching/)                    | High ROI    | Low ROI     | N/A         | High ROI    |
 | Model Routing                                                                 | Recommended | High ROI    | Recommended | High ROI    |
 | Cost Dashboard                                                                | Recommended | Recommended | Recommended | Recommended |
 | **Observability**                                                             |             |             |             |             |
