@@ -1,0 +1,17 @@
+[project]
+name = "latency-budget"
+version = "0.1.0"
+description = "Latency Budget Pattern — deadline propagation for multi-step LLM pipelines"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+# Use importlib mode to avoid 'py' directory shadowing the py library
+import_mode = "importlib"
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+]

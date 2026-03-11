@@ -97,7 +97,7 @@ These four system types represent distinct operational profiles — each creates
 | State Checkpointing                                                           | Optional    | Required    | N/A         | Critical    |
 | Multi-Agent Routing                                                           | Optional    | Critical    | Optional    | Recommended |
 | **Performance**                                                               |             |             |             |             |
-| Latency Budget                                                                | Required    | Recommended | Critical    | Optional    |
+| [Latency Budget](patterns/performance/latency-budget/)                        | Required    | Recommended | Critical    | Optional    |
 | Request Batching                                                              | High ROI    | Optional    | N/A         | Critical    |
 | Concurrent Request Management                                                 | Required    | Required    | Recommended | Critical    |
 | Streaming Backpressure                                                        | Optional    | Optional    | Critical    | N/A         |
