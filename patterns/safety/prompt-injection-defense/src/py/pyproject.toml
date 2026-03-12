@@ -1,0 +1,18 @@
+[project]
+name = "prompt-injection-defense"
+version = "0.1.0"
+description = "Layered prompt injection defense pipeline"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.23"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+# Run from repo root to avoid 'py' directory name conflicting with pytest's 'py' library:
+# python -m pytest patterns/safety/prompt-injection-defense/src/py/tests/ -v --import-mode=importlib --override-ini="asyncio_mode=auto" -c /dev/null --rootdir=.
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.backends._legacy:_Backend"
