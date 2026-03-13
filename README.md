@@ -70,7 +70,7 @@ These four system types represent distinct operational profiles — each creates
 | Cost Dashboard                                                                | Recommended | Recommended | Recommended | Recommended |
 | **Observability**                                                             |             |             |             |             |
 | [Structured Tracing](patterns/observability/structured-tracing/)              | Required    | Critical    | Required    | Recommended |
-| Output Quality Monitoring                                                     | Required    | Required    | Recommended | Required    |
+| [Output Quality Monitoring](patterns/observability/output-quality-monitoring/) | Required    | Required    | Recommended | Required    |
 | Drift Detection                                                               | Required    | Recommended | Optional    | Required    |
 | Prompt Diffing                                                                | Recommended | Recommended | Optional    | Recommended |
 | [Prompt Version Registry](patterns/observability/prompt-version-registry/)     | Required    | Required    | Recommended | Required    |
