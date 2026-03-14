@@ -1,0 +1,11 @@
+[project]
+name = "agent-loop-guards"
+version = "1.0.0"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+addopts = "--import-mode=importlib"
+
+[project.optional-dependencies]
+test = ["pytest>=8.0", "pytest-asyncio>=0.23"]

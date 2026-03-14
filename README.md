@@ -92,7 +92,7 @@ These four system types represent distinct operational profiles — each creates
 | Index Maintenance                                                             | Required    | Optional    | N/A         | Recommended |
 | Context Management                                                            | Recommended | Required    | Required    | Optional    |
 | **Orchestration**                                                             |             |             |             |             |
-| Agent Loop Guards                                                             | Optional    | Critical    | Recommended | Recommended |
+| [Agent Loop Guards](patterns/orchestration/agent-loop-guards/)                | Optional    | Critical    | Recommended | Recommended |
 | Tool Call Reliability                                                         | Recommended | Critical    | Optional    | Recommended |
 | State Checkpointing                                                           | Optional    | Required    | N/A         | Critical    |
 | Multi-Agent Routing                                                           | Optional    | Critical    | Optional    | Recommended |
