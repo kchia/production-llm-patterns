@@ -78,7 +78,7 @@ These four system types represent distinct operational profiles — each creates
 | **Testing**                                                                   |             |             |             |             |
 | [Eval Harness](patterns/testing/eval-harness/)                                | Required    | Required    | Recommended | Required    |
 | [Regression Testing](patterns/testing/regression-testing/)                     | Required    | Required    | Recommended | Required    |
-| Adversarial Inputs                                                            | Recommended | Critical    | Recommended | Optional    |
+| [Adversarial Inputs](patterns/testing/adversarial-inputs/)                     | Recommended | Critical    | Recommended | Optional    |
 | Snapshot Testing                                                              | Recommended | Recommended | Optional    | Recommended |
 | Prompt Rollout Testing                                                        | Required    | Required    | Recommended | High ROI    |
 | **Safety**                                                                    |             |             |             |             |

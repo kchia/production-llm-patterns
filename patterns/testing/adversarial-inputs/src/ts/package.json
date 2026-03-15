@@ -1,0 +1,17 @@
+{
+  "name": "adversarial-inputs",
+  "version": "1.0.0",
+  "description": "Adversarial input testing harness for LLM systems",
+  "type": "module",
+  "main": "index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "typescript": "^5.4.0",
+    "vitest": "^2.0.0"
+  }
+}
