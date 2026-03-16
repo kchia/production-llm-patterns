@@ -87,7 +87,7 @@ These four system types represent distinct operational profiles — each creates
 | [Prompt Injection Defense](patterns/safety/prompt-injection-defense/)          | Required    | Critical    | Required    | Recommended |
 | Human-in-the-Loop                                                             | Optional    | Required    | N/A         | Optional    |
 | **Data Pipeline**                                                             |             |             |             |             |
-| Chunking Strategies                                                           | Critical    | Optional    | N/A         | Recommended |
+| [Chunking Strategies](patterns/data-pipeline/chunking-strategies/)             | Critical    | Optional    | N/A         | Recommended |
 | Embedding Refresh                                                             | Required    | Optional    | N/A         | Required    |
 | Index Maintenance                                                             | Required    | Optional    | N/A         | Recommended |
 | Context Management                                                            | Recommended | Required    | Required    | Optional    |
