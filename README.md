@@ -74,7 +74,7 @@ These four system types represent distinct operational profiles — each creates
 | Drift Detection                                                               | Required    | Recommended | Optional    | Required    |
 | Prompt Diffing                                                                | Recommended | Recommended | Optional    | Recommended |
 | [Prompt Version Registry](patterns/observability/prompt-version-registry/)     | Required    | Required    | Recommended | Required    |
-| Online Eval Monitoring                                                        | Required    | Required    | Recommended | Required    |
+| [Online Eval Monitoring](patterns/observability/online-eval-monitoring/)       | Required    | Required    | Recommended | Required    |
 | **Testing**                                                                   |             |             |             |             |
 | [Eval Harness](patterns/testing/eval-harness/)                                | Required    | Required    | Recommended | Required    |
 | [Regression Testing](patterns/testing/regression-testing/)                     | Required    | Required    | Recommended | Required    |
@@ -93,7 +93,7 @@ These four system types represent distinct operational profiles — each creates
 | Context Management                                                            | Recommended | Required    | Required    | Optional    |
 | **Orchestration**                                                             |             |             |             |             |
 | [Agent Loop Guards](patterns/orchestration/agent-loop-guards/)                | Optional    | Critical    | Recommended | Recommended |
-| Tool Call Reliability                                                         | Recommended | Critical    | Optional    | Recommended |
+| [Tool Call Reliability](patterns/orchestration/tool-call-reliability/)        | Recommended | Critical    | Optional    | Recommended |
 | State Checkpointing                                                           | Optional    | Required    | N/A         | Critical    |
 | Multi-Agent Routing                                                           | Optional    | Critical    | Optional    | Recommended |
 | **Performance**                                                               |             |             |             |             |

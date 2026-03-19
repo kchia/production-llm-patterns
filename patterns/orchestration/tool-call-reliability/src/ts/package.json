@@ -1,0 +1,18 @@
+{
+  "name": "tool-call-reliability",
+  "version": "1.0.0",
+  "description": "Tool Call Reliability pattern — validates and repairs LLM tool calls",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "vitest": "^1.2.0",
+    "@types/node": "^20.0.0"
+  }
+}
