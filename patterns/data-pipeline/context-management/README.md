@@ -6,7 +6,7 @@
 
 LLM context windows are finite and expensive, and the failure mode when you ignore that is surprisingly subtle. In a multi-turn agent or chat system, context grows message by message. At some point it hits the limit. The LLM API throws a `context_length_exceeded` error — or worse, silently truncates from the beginning of the conversation, losing the system prompt that defines the assistant's behavior. The agent keeps running, but it's forgotten who it is.
 
-The dollar dimension matters too. On Claude Sonnet at $3.00/1M input tokens, a 50K-token context window filled with stale conversation history costs $0.15 per call — before the model generates a single output token. A RAG pipeline that appends retrieved documents on every turn compounds this: 5 retrieved chunks × 1,000 tokens each × 10K requests/day = $150/day in input tokens for context that's largely redundant across calls.
+The dollar dimension matters too. On Claude Sonnet at `$3.00/1M` input tokens, a 50K-token context window filled with stale conversation history costs `$0.15` per call — before the model generates a single output token. A RAG pipeline that appends retrieved documents on every turn compounds this: 5 retrieved chunks × 1,000 tokens each × 10K requests/day = `$150/day` in input tokens for context that's largely redundant across calls.
 
 The way I think about it: an LLM call is a snapshot. You choose what to put in the frame. Without an active management strategy, you're not choosing — you're accumulating.
 
@@ -38,7 +38,7 @@ The second thing I'd avoid: building a summarization approach that requires a re
 
 - **Agents → Required.** Agents accumulate tool results, intermediate reasoning, and multi-step dialogue. Without context management, long-running agent loops will hit the limit — and the failure tends to be hard to reproduce because it only manifests in long sessions.
 - **Streaming → Required.** Streaming delivery doesn't change context growth. A 20-turn streaming conversation has the same context pressure as a non-streaming one.
-- **RAG → Recommended.** RAG pipelines have a double pressure: conversation history grows *and* retrieved chunks are appended per turn. Managing both is important, but RAG systems with fixed retrieval budgets and short sessions can often handle this with a simpler approach.
+- **RAG → Recommended.** RAG pipelines have a double pressure: conversation history grows _and_ retrieved chunks are appended per turn. Managing both is important, but RAG systems with fixed retrieval budgets and short sessions can often handle this with a simpler approach.
 - **Batch → Optional.** Batch jobs typically process independent inputs with no accumulated state. If your batch pipeline does include multi-turn context, apply this; otherwise it doesn't apply.
 
 ## The Pattern
@@ -46,79 +46,76 @@ The second thing I'd avoid: building a summarization approach that requires a re
 ### Architecture
 
 ```
-Messages added via add()
-        │
-        ▼
-┌── 1. History Store ──────────────────┐
-│   Ordered list of messages           │ → with token counts cached per message
-│   with priority, role, and id        │   (avoids re-counting on every build)
-└───────────────┬──────────────────────┘
-                │
-                ▼ build() called
-┌── 2. Token Budgeter ─────────────────┐
-│   available = maxTokens              │ → determines if trimming needed
-│              - reserveForOutput      │   available tokens for messages
-│   count tokens for all messages      │
-└───────────────┬──────────────────────┘
-                │ if total > available
-                ▼
-┌── 3. Trim Strategy ──────────────────┐
-│  ┌──────────────────────────────┐    │
-│  │ SlidingWindow                │    │  → always keeps system messages
-│  │ (keep most recent N)         │    │     trims oldest non-system first
-│  └──────────────────────────────┘    │
-│  ┌──────────────────────────────┐    │
-│  │ Priority                     │    │  → keeps system messages
-│  │ (keep highest-priority N)    │    │     then sorts by priority, then recency
-│  └──────────────────────────────┘    │
-│  ┌──────────────────────────────┐    │
-│  │ Summarize (mock in tests)    │    │  → compresses old messages to summary
-│  │ keep recent K as-is          │    │     keeps recent K verbatim
-│  └──────────────────────────────┘    │
-└───────────────┬──────────────────────┘
-                │
-                ▼
-        ContextWindow
-  { messages[], totalTokens,
-    droppedMessages, budgetUsed,
-    strategy }
+Messages via add()
+       │
+       ▼
+┌── 1. History Store ──────────────┐
+│  Messages: role, content, id,    │
+│  priority, cached token count    │
+└──────────────┬───────────────────┘
+               │ build()
+               ▼
+┌── 2. Token Budgeter ─────────────┐
+│  available = maxTokens           │
+│            − reserveForOutput    │
+│  sum tokens across all messages  │
+└──────────────┬───────────────────┘
+               │
+       ┌───────┴────────────┐
+       │ total ≤ available? │
+       └───┬────────────┬───┘
+         Yes           No
+           │            ▼
+           │   ┌── 3. Trim Strategy ──────┐
+           │   │  sliding-window          │
+           │   │  priority                │
+           │   │  summarize               │
+           │   │  (system msgs preserved) │
+           │   └────────────┬─────────────┘
+           │                │
+           └────────┬───────┘
+                    ▼
+             ContextWindow
+       { messages[], totalTokens,
+         droppedMessages, budgetUsed,
+         strategy }
 ```
 
 ### Core Abstraction
 
 ```typescript
 interface Message {
-  role: 'system' | 'user' | 'assistant';
+  role: "system" | "user" | "assistant";
   content: string;
-  id: string;       // unique ID for tracking dropped messages
+  id: string; // unique ID for tracking dropped messages
   priority: number; // 0–1, default 0.5; higher = more likely to survive trimming
-  tokens?: number;  // cached token count
+  tokens?: number; // cached token count
 }
 
 interface ContextConfig {
-  maxTokens: number;        // context window size for this model
+  maxTokens: number; // context window size for this model
   reserveForOutput: number; // tokens to reserve for the model's response
-  strategy: 'sliding-window' | 'priority' | 'summarize';
-  keepRecent: number;       // for summarize strategy: how many recent messages to keep verbatim
+  strategy: "sliding-window" | "priority" | "summarize";
+  keepRecent: number; // for summarize strategy: how many recent messages to keep verbatim
 }
 
 interface ContextWindow {
-  messages: Message[];      // messages to send to the LLM
-  totalTokens: number;      // token count of included messages
-  droppedMessages: number;  // how many were excluded
-  budgetUsed: number;       // fraction of available budget consumed (0–1)
+  messages: Message[]; // messages to send to the LLM
+  totalTokens: number; // token count of included messages
+  droppedMessages: number; // how many were excluded
+  budgetUsed: number; // fraction of available budget consumed (0–1)
   strategy: string;
 }
 ```
 
 ### Configurability
 
-| Parameter          | Default          | Safe Range                                       | What It Controls                                                                                                     |
-| ------------------ | ---------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| `maxTokens`        | 128,000          | Model-specific                                   | Total context window size. Match to the model being called — GPT-4o: 128K, Claude Sonnet: 200K, GPT-4o-mini: 128K.  |
-| `reserveForOutput` | 4,000            | 1,000–16,000                                     | Tokens reserved for the model's response. Too small: responses get truncated. Too large: wastes message budget.      |
-| `strategy`         | `sliding-window` | `sliding-window`, `priority`, `summarize`        | Trim algorithm. `sliding-window` is the safe default; `priority` when messages have meaningful priority scores set.  |
-| `keepRecent`       | 10               | 4–20                                             | `summarize` strategy only: how many recent messages stay verbatim. Lower = more compression; too low = context loss. |
+| Parameter          | Default          | Safe Range                                | What It Controls                                                                                                     |
+| ------------------ | ---------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `maxTokens`        | 128,000          | Model-specific                            | Total context window size. Match to the model being called — GPT-4o: 128K, Claude Sonnet: 200K, GPT-4o-mini: 128K.   |
+| `reserveForOutput` | 4,000            | 1,000–16,000                              | Tokens reserved for the model's response. Too small: responses get truncated. Too large: wastes message budget.      |
+| `strategy`         | `sliding-window` | `sliding-window`, `priority`, `summarize` | Trim algorithm. `sliding-window` is the safe default; `priority` when messages have meaningful priority scores set.  |
+| `keepRecent`       | 10               | 4–20                                      | `summarize` strategy only: how many recent messages stay verbatim. Lower = more compression; too low = context loss. |
 
 ### Key Design Tradeoffs
 
@@ -140,36 +137,36 @@ See [`src/py/`](src/py/) for the full implementation.
 
 ## Failure Modes
 
-| Failure Mode | Detection Signal | Mitigation |
-| --- | --- | --- |
-| **System prompt eviction** — naive trimming removes system messages when trimming from the front, causing the model to lose behavioral instructions | Model output stops following formatting or constraint rules mid-conversation; no API error fires | Always preserve `role: 'system'` messages before applying any trim strategy — treat them as pinned |
-| **Silent truncation by the provider** — calling the API with a context that exceeds the model's limit; some providers truncate silently rather than erroring | Model responses become incoherent mid-conversation; no error appears in logs | Count tokens before every API call; assert `totalTokens <= maxTokens - reserveForOutput` before calling |
-| **Priority score stagnation** _(the 6-month failure)_ — all messages added with default priority 0.5; priority strategy produces arbitrary trim results; callers don't notice because behavior degrades gradually, not suddenly | Priority histogram is flat at 0.5 across all message types; retrieval quality declines with session length | Monitor priority score distribution; alert if >80% of messages carry default priority — it signals the priority signal is unused |
-| **Reserve underestimate** — `reserveForOutput` set too low; model hits output limit mid-response, producing truncated answers | Response completions drop suddenly at a predictable token boundary; users report cut-off answers | Monitor output token distribution; set `reserveForOutput` to p99 observed output length + 20% margin |
-| **Context budget leak** — background context (tool schemas, retrieved documents) not counted against the budget; actual context larger than `ContextWindow.totalTokens` suggests | API calls fail with `context_length_exceeded` despite `budgetUsed` showing < 1.0 | Account for all tokens sent to the API — not just message history; include tool definitions, system metadata, retrieved chunks in budget calculation |
-| **Summarize loop** — summarize strategy triggered on every call; old summaries accumulate because they're not merged; context fills with nested summaries | Context contains multiple `[Summary: ...]` blocks; summary text itself starts consuming significant budget | Deduplicate summaries by sourceId; merge consecutive summaries rather than stacking; cap summary budget at a fixed token count |
+| Failure Mode                                                                                                                                                                                                                    | Detection Signal                                                                                           | Mitigation                                                                                                                                           |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **System prompt eviction** — naive trimming removes system messages when trimming from the front, causing the model to lose behavioral instructions                                                                             | Model output stops following formatting or constraint rules mid-conversation; no API error fires           | Always preserve `role: 'system'` messages before applying any trim strategy — treat them as pinned                                                   |
+| **Silent truncation by the provider** — calling the API with a context that exceeds the model's limit; some providers truncate silently rather than erroring                                                                    | Model responses become incoherent mid-conversation; no error appears in logs                               | Count tokens before every API call; assert `totalTokens <= maxTokens - reserveForOutput` before calling                                              |
+| **Priority score stagnation** _(the 6-month failure)_ — all messages added with default priority 0.5; priority strategy produces arbitrary trim results; callers don't notice because behavior degrades gradually, not suddenly | Priority histogram is flat at 0.5 across all message types; retrieval quality declines with session length | Monitor priority score distribution; alert if >80% of messages carry default priority — it signals the priority signal is unused                     |
+| **Reserve underestimate** — `reserveForOutput` set too low; model hits output limit mid-response, producing truncated answers                                                                                                   | Response completions drop suddenly at a predictable token boundary; users report cut-off answers           | Monitor output token distribution; set `reserveForOutput` to p99 observed output length + 20% margin                                                 |
+| **Context budget leak** — background context (tool schemas, retrieved documents) not counted against the budget; actual context larger than `ContextWindow.totalTokens` suggests                                                | API calls fail with `context_length_exceeded` despite `budgetUsed` showing < 1.0                           | Account for all tokens sent to the API — not just message history; include tool definitions, system metadata, retrieved chunks in budget calculation |
+| **Summarize loop** — summarize strategy triggered on every call; old summaries accumulate because they're not merged; context fills with nested summaries                                                                       | Context contains multiple `[Summary: ...]` blocks; summary text itself starts consuming significant budget | Deduplicate summaries by sourceId; merge consecutive summaries rather than stacking; cap summary budget at a fixed token count                       |
 
 ## Observability & Operations
 
 ### Key Metrics
 
-| Metric | What It Measures | Collection Method |
-| --- | --- | --- |
-| `context.budget_used` | Fraction of available token budget consumed per call (histogram) | Emit from `build()` result |
-| `context.dropped_messages` | Messages excluded per call (histogram) | Emit from `ContextWindow.droppedMessages` |
-| `context.history_depth` | Number of messages in history when `build()` is called | Count `history.length` before trimming |
-| `context.trim_triggered` | Whether trimming occurred on this call (boolean) | `1` if `droppedMessages > 0`, else `0` |
-| `context.strategy_used` | Which strategy was applied | Tag on each metric emission |
-| `context.tokens_saved` | Tokens excluded vs. raw history size | `rawTokens - totalTokens` |
+| Metric                     | What It Measures                                                 | Collection Method                         |
+| -------------------------- | ---------------------------------------------------------------- | ----------------------------------------- |
+| `context.budget_used`      | Fraction of available token budget consumed per call (histogram) | Emit from `build()` result                |
+| `context.dropped_messages` | Messages excluded per call (histogram)                           | Emit from `ContextWindow.droppedMessages` |
+| `context.history_depth`    | Number of messages in history when `build()` is called           | Count `history.length` before trimming    |
+| `context.trim_triggered`   | Whether trimming occurred on this call (boolean)                 | `1` if `droppedMessages > 0`, else `0`    |
+| `context.strategy_used`    | Which strategy was applied                                       | Tag on each metric emission               |
+| `context.tokens_saved`     | Tokens excluded vs. raw history size                             | `rawTokens - totalTokens`                 |
 
 ### Alerting
 
-| Alert | Warning Threshold | Critical Threshold | Notes |
-| --- | --- | --- | --- |
-| Budget used consistently high | p95 > 0.85 | p95 > 0.95 | Context pressure growing; consider reducing `keepRecent` or switching strategy |
-| Dropped messages per call rising | p95 > 5 | p95 > 15 | Trimming aggressively; history growing faster than budget allows |
-| Priority score distribution flat | > 80% messages at default 0.5 | — | Priority signal unused; priority strategy won't add value |
-| Context budget leak | Any `context_length_exceeded` from API | 3+ in 5 min | Tool schemas or retrieved docs not counted in budget |
+| Alert                            | Warning Threshold                      | Critical Threshold | Notes                                                                          |
+| -------------------------------- | -------------------------------------- | ------------------ | ------------------------------------------------------------------------------ |
+| Budget used consistently high    | p95 > 0.85                             | p95 > 0.95         | Context pressure growing; consider reducing `keepRecent` or switching strategy |
+| Dropped messages per call rising | p95 > 5                                | p95 > 15           | Trimming aggressively; history growing faster than budget allows               |
+| Priority score distribution flat | > 80% messages at default 0.5          | —                  | Priority signal unused; priority strategy won't add value                      |
+| Context budget leak              | Any `context_length_exceeded` from API | 3+ in 5 min        | Tool schemas or retrieved docs not counted in budget                           |
 
 ### Runbook
 
@@ -192,20 +189,20 @@ See [`src/py/`](src/py/) for the full implementation.
 
 ### Tuning Levers
 
-| Parameter | When to Increase | When to Decrease | Watch Out For |
-| --- | --- | --- | --- |
-| `reserveForOutput` | Output completions are truncated mid-response | Budget consistently underutilized | Reducing too far causes truncated responses |
-| `keepRecent` (summarize) | Model needs more recent context to answer well | Context fills with recent messages, old summary is tiny | < 4 risks losing too much context for coherent responses |
-| Priority scores | — | — | All messages at default 0.5 makes priority strategy equivalent to random selection |
+| Parameter                | When to Increase                               | When to Decrease                                        | Watch Out For                                                                      |
+| ------------------------ | ---------------------------------------------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `reserveForOutput`       | Output completions are truncated mid-response  | Budget consistently underutilized                       | Reducing too far causes truncated responses                                        |
+| `keepRecent` (summarize) | Model needs more recent context to answer well | Context fills with recent messages, old summary is tiny | < 4 risks losing too much context for coherent responses                           |
+| Priority scores          | —                                              | —                                                       | All messages at default 0.5 makes priority strategy equivalent to random selection |
 
 ### Drift Signals
 
-| Frequency | What to Check |
-| --- | --- |
-| **Weekly** | `context.budget_used` p50 and p95 trend. Rising p50 means sessions are growing longer or messages are getting larger. |
-| **On each model upgrade** | Re-verify `maxTokens` matches the new model's context window. A model upgrade with the wrong `maxTokens` will miscalculate budget, leading to either wasted capacity or API errors. |
-| **When adding new context sources** | Any time you add tool schemas, retrieved documents, or metadata to the request body, re-measure total tokens at the API boundary and adjust budget accounting. |
-| **When error rate rises** | Check for `context_length_exceeded` errors — they indicate the managed budget is smaller than the actual request. |
+| Frequency                           | What to Check                                                                                                                                                                       |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Weekly**                          | `context.budget_used` p50 and p95 trend. Rising p50 means sessions are growing longer or messages are getting larger.                                                               |
+| **On each model upgrade**           | Re-verify `maxTokens` matches the new model's context window. A model upgrade with the wrong `maxTokens` will miscalculate budget, leading to either wasted capacity or API errors. |
+| **When adding new context sources** | Any time you add tool schemas, retrieved documents, or metadata to the request body, re-measure total tokens at the API boundary and adjust budget accounting.                      |
+| **When error rate rises**           | Check for `context_length_exceeded` errors — they indicate the managed budget is smaller than the actual request.                                                                   |
 
 ### Silent Degradation
 
@@ -219,11 +216,11 @@ At Month 6, the team adds tool schema definitions to every request — 2,000 tok
 
 See [`cost-analysis.md`](cost-analysis.md) for detailed numbers.
 
-| Scale | Without Pattern | With Pattern | Savings |
-| --- | --- | --- | --- |
-| 1K req/day | $15.00/day | $6.75/day | −$8.25/day (~55%) |
-| 10K req/day | $150.00/day | $67.50/day | −$82.50/day (~55%) |
-| 100K req/day | $1,500.00/day | $675.00/day | −$825.00/day (~55%) |
+| Scale        | Without Pattern | With Pattern | Savings             |
+| ------------ | --------------- | ------------ | ------------------- |
+| 1K req/day   | $15.00/day      | $6.75/day    | −$8.25/day (~55%)   |
+| 10K req/day  | $150.00/day     | $67.50/day   | −$82.50/day (~55%)  |
+| 100K req/day | $1,500.00/day   | $675.00/day  | −$825.00/day (~55%) |
 
 _Assumes Claude Sonnet pricing, 10-turn average sessions, 50K avg tokens without management, 22.5K with sliding window. See cost-analysis.md for full assumptions._
 
@@ -276,11 +273,11 @@ pytest
 - Applications using provider-managed conversation state (e.g., OpenAI Assistants API with thread management) — the provider is doing this work; adding your own layer creates conflicts
 - Batch pipelines where each item is processed independently with no accumulated context
 
-## Companion Content
+<!-- ## Companion Content
 
 - Blog post: [Context Management](link) — deeper reasoning on why this pattern matters
 - Related patterns:
   - [Chunking Strategies](../chunking-strategies/) (#19, S6) — determines what units of retrieved context are available for context assembly
   - [Token Budget Middleware](../../cost-control/token-budget-middleware/) (#3, S1) — context size directly drives token cost; these patterns share the same cost lever
   - [Latency Budget](../../performance/latency-budget/) (#14, S4) — larger contexts increase time-to-first-token; context management is a latency lever
-  - [Streaming Backpressure](../../performance/streaming-backpressure/) (#27, S7) — context size affects generation length and backpressure dynamics
+  - [Streaming Backpressure](../../performance/streaming-backpressure/) (#27, S7) — context size affects generation length and backpressure dynamics -->

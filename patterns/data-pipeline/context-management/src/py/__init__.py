@@ -172,7 +172,7 @@ class ContextManager:
 
     def add(
         self,
-        role: "StrategyName | str" = "user",
+        role: str = "user",
         content: str = "",
         priority: float = 0.5,
         id: Optional[str] = None,

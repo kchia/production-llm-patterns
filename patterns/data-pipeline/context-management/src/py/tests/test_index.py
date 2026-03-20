@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import pytest
-from ..__init__ import ContextManager, ContextConfig, create_mock_tokenizer, create_mock_summarizer
+from .. import ContextManager, create_mock_tokenizer, create_mock_summarizer
+from ..types import ContextConfig
 from ..mock_provider import MockTokenizer
 
 
