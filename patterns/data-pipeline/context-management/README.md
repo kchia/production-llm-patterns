@@ -36,10 +36,12 @@ The second thing I'd avoid: building a summarization approach that requires a re
 
 **Priority by system type** (from the [Navigation Matrix](../../../README.md#navigation-matrix)):
 
-- **Agents → Required.** Agents accumulate tool results, intermediate reasoning, and multi-step dialogue. Without context management, long-running agent loops will hit the limit — and the failure tends to be hard to reproduce because it only manifests in long sessions.
-- **Streaming → Required.** Streaming delivery doesn't change context growth. A 20-turn streaming conversation has the same context pressure as a non-streaming one.
-- **RAG → Recommended.** RAG pipelines have a double pressure: conversation history grows _and_ retrieved chunks are appended per turn. Managing both is important, but RAG systems with fixed retrieval budgets and short sessions can often handle this with a simpler approach.
-- **Batch → Optional.** Batch jobs typically process independent inputs with no accumulated state. If your batch pipeline does include multi-turn context, apply this; otherwise it doesn't apply.
+| System Type | Designation | Reasoning |
+| --- | --- | --- |
+| Agents | Required | Agents accumulate tool results, intermediate reasoning, and multi-step dialogue. Without context management, long-running agent loops will hit the limit — and the failure tends to be hard to reproduce because it only manifests in long sessions. |
+| Streaming | Required | Streaming delivery doesn't change context growth. A 20-turn streaming conversation has the same context pressure as a non-streaming one. |
+| RAG | Recommended | RAG pipelines have a double pressure: conversation history grows _and_ retrieved chunks are appended per turn. Managing both is important, but RAG systems with fixed retrieval budgets and short sessions can often handle this with a simpler approach. |
+| Batch | Optional | Batch jobs typically process independent inputs with no accumulated state. If your batch pipeline does include multi-turn context, apply this; otherwise it doesn't apply. |
 
 ## The Pattern
 
@@ -270,14 +272,14 @@ pytest
 
 - Single-turn systems where each request is fully independent — if there's no conversation state, there's no context to manage
 - Systems where every conversation is short enough that the context window is never approached in practice (e.g., single-exchange Q&A with short answers)
-- Applications using provider-managed conversation state (e.g., OpenAI Assistants API with thread management) — the provider is doing this work; adding your own layer creates conflicts
+- Applications using provider-managed conversation state (e.g., [OpenAI Assistants API](https://platform.openai.com/docs/guides/conversation-state) with thread management) — the provider is doing this work; adding your own layer creates conflicts
 - Batch pipelines where each item is processed independently with no accumulated context
 
-<!-- ## Companion Content
+## Companion Content
 
 - Blog post: [Context Management](link) — deeper reasoning on why this pattern matters
 - Related patterns:
   - [Chunking Strategies](../chunking-strategies/) (#19, S6) — determines what units of retrieved context are available for context assembly
   - [Token Budget Middleware](../../cost-control/token-budget-middleware/) (#3, S1) — context size directly drives token cost; these patterns share the same cost lever
   - [Latency Budget](../../performance/latency-budget/) (#14, S4) — larger contexts increase time-to-first-token; context management is a latency lever
-  - [Streaming Backpressure](../../performance/streaming-backpressure/) (#27, S7) — context size affects generation length and backpressure dynamics -->
+  - [Streaming Backpressure](../../performance/streaming-backpressure/) (#27, S7) — context size affects generation length and backpressure dynamics

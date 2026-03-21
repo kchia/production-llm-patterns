@@ -74,7 +74,7 @@ These four system types represent distinct operational profiles — each creates
 | Drift Detection                                                               | Required    | Recommended | Optional    | Required    |
 | Prompt Diffing                                                                | Recommended | Recommended | Optional    | Recommended |
 | [Prompt Version Registry](patterns/observability/prompt-version-registry/)     | Required    | Required    | Recommended | Required    |
-| [Online Eval Monitoring](patterns/observability/online-eval-monitoring/)       | Required    | Required    | Recommended | Required    |
+| Online Eval Monitoring                                                        | Required    | Required    | Recommended | Required    |
 | **Testing**                                                                   |             |             |             |             |
 | [Eval Harness](patterns/testing/eval-harness/)                                | Required    | Required    | Recommended | Required    |
 | [Regression Testing](patterns/testing/regression-testing/)                     | Required    | Required    | Recommended | Required    |
@@ -90,7 +90,7 @@ These four system types represent distinct operational profiles — each creates
 | [Chunking Strategies](patterns/data-pipeline/chunking-strategies/)             | Critical    | Optional    | N/A         | Recommended |
 | Embedding Refresh                                                             | Required    | Optional    | N/A         | Required    |
 | Index Maintenance                                                             | Required    | Optional    | N/A         | Recommended |
-| [Context Management](patterns/data-pipeline/context-management/)              | Recommended | Required    | Required    | Optional    |
+| Context Management                                                            | Recommended | Required    | Required    | Optional    |
 | **Orchestration**                                                             |             |             |             |             |
 | [Agent Loop Guards](patterns/orchestration/agent-loop-guards/)                | Optional    | Critical    | Recommended | Recommended |
 | [Tool Call Reliability](patterns/orchestration/tool-call-reliability/)        | Recommended | Critical    | Optional    | Recommended |
@@ -99,7 +99,7 @@ These four system types represent distinct operational profiles — each creates
 | **Performance**                                                               |             |             |             |             |
 | [Latency Budget](patterns/performance/latency-budget/)                        | Required    | Recommended | Critical    | Optional    |
 | Request Batching                                                              | High ROI    | Optional    | N/A         | Critical    |
-| Concurrent Request Management                                                 | Required    | Required    | Recommended | Critical    |
+| [Concurrent Request Management](patterns/performance/concurrent-request-management/) | Required    | Required    | Recommended | Critical    |
 | Streaming Backpressure                                                        | Optional    | Optional    | Critical    | N/A         |
 
 **Legend — how these designations work:**

@@ -8,9 +8,9 @@ This repo contains 35 production patterns for LLM systems — framework-agnostic
 ## Quick Stats
 
 - **Total patterns:** 35
-- **Complete:** 19
+- **Complete:** 21
 - **In Progress:** 2
-- **Not Started:** 15
+- **Not Started:** 12
 - **Categories:** 8
 - **Languages:** TypeScript + Python (dual implementations)
 - **Shared utilities:** 5
@@ -24,7 +24,7 @@ This repo contains 35 production patterns for LLM systems — framework-agnostic
 | [Semantic Caching](patterns/cost-control/semantic-caching/) | cost-control | Complete | High ROI | Low ROI | N/A | High ROI | ✓ | ✓ | ✓ | ✓ | Users ask similar questions repeatedly — not identical strings, but semantically equivalent. |
 | [Token Budget Middleware](patterns/cost-control/token-budget-middleware/) | cost-control | Complete | Required | Required | Recommended | Required | ✓ | ✓ |  | ✓ | Every LLM API call is an open-ended financial commitment. |
 | [Chunking Strategies](patterns/data-pipeline/chunking-strategies/) | data-pipeline | In Progress | Critical | Optional | N/A | Recommended | ✓ | ✓ | ✓ | ✓ | Poor chunking destroys retrieval quality — fixed-size splitting produces 13% task accuracy vs 87% for adaptive strategies. |
-| Context Management | data-pipeline | Not Started | Recommended | Required | Required | Optional |  |  |  |  | LLM context windows are finite and expensive. |
+| [Context Management](patterns/data-pipeline/context-management/) | data-pipeline | Complete | Recommended | Required | Required | Optional | ✓ | ✓ | ✓ | ✓ | LLM context windows are finite and expensive. |
 | Embedding Refresh | data-pipeline | Not Started | Required | Optional | N/A | Required |  |  |  |  | Embeddings go stale. |
 | Index Maintenance | data-pipeline | Not Started | Required | Optional | N/A | Recommended |  |  |  |  | Vector indexes degrade over time. |
 | Drift Detection | observability | Not Started | Required | Recommended | Optional | Required |  |  |  |  | Model behavior changes over time — provider-side updates, shifting input distributions, evolving user behavior. |
@@ -37,7 +37,7 @@ This repo contains 35 production patterns for LLM systems — framework-agnostic
 | Multi-Agent Routing | orchestration | Not Started | Optional | Critical | Optional | Recommended |  |  |  |  | As agent systems grow, a single agent can't handle all task types effectively. |
 | State Checkpointing | orchestration | Not Started | Optional | Required | N/A | Critical |  |  |  |  | Long-running LLM workflows fail partway through — API timeouts, rate limits, provider outages. |
 | [Tool Call Reliability](patterns/orchestration/tool-call-reliability/) | orchestration | Complete | Recommended | Critical | Optional | Recommended | ✓ | ✓ | ✓ | ✓ | GPT-4o achieves ~61% single-trial success on tool-use tasks; across 8 trials representing a real session, that drops to ~25%. |
-| Concurrent Request Management | performance | Not Started | Required | Required | Recommended | Critical |  |  |  |  | LLM API calls are slow (1-10 seconds) and rate-limited. |
+| [Concurrent Request Management](patterns/performance/concurrent-request-management/) | performance | Complete | Required | Required | Recommended | Critical | ✓ | ✓ | ✓ | ✓ | LLM API calls are slow (1-10 seconds) and rate-limited. Without concurrency management, unmanaged parallelism triggers rate limit cascades that self-amplify through retry storms. |
 | [Latency Budget](patterns/performance/latency-budget/) | performance | Complete | Required | Recommended | Critical | Optional | ✓ | ✓ | ✓ | ✓ | LLM calls are slow — typically 1–10 seconds each for popular models. |
 | Request Batching | performance | Not Started | High ROI | Optional | N/A | Critical |  |  |  |  | Processing items one-at-a-time through an LLM API wastes throughput. |
 | Streaming Backpressure | performance | Not Started | Optional | Optional | Critical | N/A |  |  |  |  | LLM streaming responses can overwhelm slow consumers. |
