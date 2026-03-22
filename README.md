@@ -80,7 +80,7 @@ These four system types represent distinct operational profiles — each creates
 | [Regression Testing](patterns/testing/regression-testing/)                     | Required    | Required    | Recommended | Required    |
 | [Adversarial Inputs](patterns/testing/adversarial-inputs/)                     | Recommended | Critical    | Recommended | Optional    |
 | Snapshot Testing                                                              | Recommended | Recommended | Optional    | Recommended |
-| Prompt Rollout Testing                                                        | Required    | Required    | Recommended | High ROI    |
+| [Prompt Rollout Testing](patterns/testing/prompt-rollout-testing/)             | Required    | Required    | Recommended | High ROI    |
 | **Safety**                                                                    |             |             |             |             |
 | [Structured Output Validation](patterns/safety/structured-output-validation/) | Required    | Critical    | Required    | Required    |
 | [PII Detection](patterns/safety/pii-detection/)                               | Required    | Required    | Required    | Required    |
