@@ -94,7 +94,7 @@ These four system types represent distinct operational profiles — each creates
 | **Orchestration**                                                             |             |             |             |             |
 | [Agent Loop Guards](patterns/orchestration/agent-loop-guards/)                | Optional    | Critical    | Recommended | Recommended |
 | [Tool Call Reliability](patterns/orchestration/tool-call-reliability/)        | Recommended | Critical    | Optional    | Recommended |
-| State Checkpointing                                                           | Optional    | Required    | N/A         | Critical    |
+| [State Checkpointing](patterns/orchestration/state-checkpointing/)            | Optional    | Required    | N/A         | Critical    |
 | Multi-Agent Routing                                                           | Optional    | Critical    | Optional    | Recommended |
 | **Performance**                                                               |             |             |             |             |
 | [Latency Budget](patterns/performance/latency-budget/)                        | Required    | Recommended | Critical    | Optional    |
