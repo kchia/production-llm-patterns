@@ -100,7 +100,7 @@ These four system types represent distinct operational profiles — each creates
 | [Latency Budget](patterns/performance/latency-budget/)                        | Required    | Recommended | Critical    | Optional    |
 | [Request Batching](patterns/performance/request-batching/)                    | High ROI    | Optional    | N/A         | Critical    |
 | [Concurrent Request Management](patterns/performance/concurrent-request-management/) | Required    | Required    | Recommended | Critical    |
-| Streaming Backpressure                                                        | Optional    | Optional    | Critical    | N/A         |
+| [Streaming Backpressure](patterns/performance/streaming-backpressure/)         | Optional    | Optional    | Critical    | N/A         |
 
 **Legend — how these designations work:**
 

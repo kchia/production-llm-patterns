@@ -238,11 +238,11 @@ Both implementations have mirrored test suites. See `src/ts/__tests__/index.test
 - Workloads requiring Zero Data Retention — Anthropic's [Message Batches API excludes ZDR](https://platform.claude.com/docs/en/build-with-claude/zero-data-retention); for those use cases, real-time API with client-side concurrency control is the only option
 - Single-item processing pipelines where there's nothing to aggregate — the complexity has no payoff
 
-<!-- ## Companion Content
+## Companion Content
 
 - Blog post: [Request Batching — Deep Dive](https://prompt-deploy.com/request-batching) (coming soon)
 - Related patterns:
   - [Concurrent Request Management](../concurrent-request-management/) (#23, S7) — manages how many batches run in parallel; the two patterns layer together
   - [Latency Budget](../latency-budget/) (#14, S4) — batching trades per-item latency for throughput; the budget determines the acceptable tradeoff
   - [Token Budget Middleware](../../cost-control/token-budget-middleware/) (#3, S1) — batching affects token spend per request; token budgets prevent runaway costs during batch jobs
-  - [State Checkpointing](../../orchestration/state-checkpointing/) (#25, S7) — checkpoints batch progress so long-running jobs can recover after failure without reprocessing everything -->
+  - [State Checkpointing](../../orchestration/state-checkpointing/) (#25, S7) — checkpoints batch progress so long-running jobs can recover after failure without reprocessing everything
