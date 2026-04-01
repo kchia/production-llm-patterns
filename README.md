@@ -88,14 +88,14 @@ These four system types represent distinct operational profiles — each creates
 | Human-in-the-Loop                                                             | Optional    | Required    | N/A         | Optional    |
 | **Data Pipeline**                                                             |             |             |             |             |
 | [Chunking Strategies](patterns/data-pipeline/chunking-strategies/)             | Critical    | Optional    | N/A         | Recommended |
-| Embedding Refresh                                                             | Required    | Optional    | N/A         | Required    |
-| Index Maintenance                                                             | Required    | Optional    | N/A         | Recommended |
+| [Embedding Refresh](patterns/data-pipeline/embedding-refresh/)               | Required    | Optional    | N/A         | Required    |
+| [Index Maintenance](patterns/data-pipeline/index-maintenance/)                | Required    | Optional    | N/A         | Recommended |
 | Context Management                                                            | Recommended | Required    | Required    | Optional    |
 | **Orchestration**                                                             |             |             |             |             |
 | [Agent Loop Guards](patterns/orchestration/agent-loop-guards/)                | Optional    | Critical    | Recommended | Recommended |
 | [Tool Call Reliability](patterns/orchestration/tool-call-reliability/)        | Recommended | Critical    | Optional    | Recommended |
 | [State Checkpointing](patterns/orchestration/state-checkpointing/)            | Optional    | Required    | N/A         | Critical    |
-| Multi-Agent Routing                                                           | Optional    | Critical    | Optional    | Recommended |
+| [Multi-Agent Routing](patterns/orchestration/multi-agent-routing/)            | Optional    | Critical    | Optional    | Recommended |
 | **Performance**                                                               |             |             |             |             |
 | [Latency Budget](patterns/performance/latency-budget/)                        | Required    | Recommended | Critical    | Optional    |
 | [Request Batching](patterns/performance/request-batching/)                    | High ROI    | Optional    | N/A         | Critical    |
