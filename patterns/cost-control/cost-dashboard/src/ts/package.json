@@ -1,0 +1,17 @@
+{
+  "name": "cost-dashboard",
+  "version": "1.0.0",
+  "description": "Track, attribute, and visualize LLM API spend across features, models, and users",
+  "type": "module",
+  "main": "index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0",
+    "@types/node": "^20.0.0"
+  }
+}

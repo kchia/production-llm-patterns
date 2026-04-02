@@ -12,7 +12,7 @@ The second is **model incompatibility**: a better embedding model releases and y
 
 Neither failure triggers an alert. Latency looks fine. The LLM is responding. Retrieval precision is collapsing — but p99 doesn't know that.
 
-The economics are concrete: one production RAG deployment reported that [re-embedding a 1TB corpus weekly cost $12,000/month](https://medium.com/@eyosiasteshale/the-refresh-trap-the-hidden-economics-of-vector-decay-in-rag-systems-f73bc15aa011) just to maintain freshness — a cost that arrives only after the team discovers their refresh pipeline is the only way to stay current. That's one production cost of not building refresh infrastructure from the start.
+The economics are concrete: one production RAG deployment reported that [re-embedding a 1TB corpus weekly cost $12,000/month](https://medium.com/@eyosiasteshale/the-refresh-trap-the-hidden-economics-of-vector-decay-in-rag-systems-f73bc15aa011) just to maintain freshness — your actual costs will vary based on embedding provider, model pricing, and chunk strategy, but the pattern holds: a cost that arrives only after the team discovers their refresh pipeline is the only way to stay current. That's one production cost of not building refresh infrastructure from the start.
 
 ## What I Would Not Do
 
@@ -24,7 +24,7 @@ The problem with that approach surfaces in a few ways:
 
 **No model version tracking** means you can't do a zero-downtime model upgrade. When you want to switch from `text-embedding-ada-002` to `text-embedding-3-large`, you discover you have no metadata about which model generated which vectors. You can't do a phased migration. You rebuild from scratch with an availability gap.
 
-**Rolling updates into a live index** is the most dangerous naive move. If you re-embed some documents with the new model and leave others on the old one, you're now comparing vectors from incompatible geometric spaces. The index is silently corrupted — everything still responds, but [similarity scores are meaningless across the model boundary](https://medium.com/data-science-collective/different-embedding-models-different-spaces-the-hidden-cost-of-model-upgrades-899db24ad233).
+**Rolling updates into a live index** is a dangerous naive move. If you re-embed some documents with the new model and leave others on the old one, you're now comparing vectors from incompatible geometric spaces. The index is silently corrupted — everything still responds, but [similarity scores are meaningless across the model boundary](https://medium.com/data-science-collective/different-embedding-models-different-spaces-the-hidden-cost-of-model-upgrades-899db24ad233).
 
 I'd be uncomfortable shipping a RAG system without at least tracking which model version produced each embedding and having a refresh path that doesn't require full downtime.
 
@@ -90,7 +90,7 @@ Source Documents
                          └─────────────────────┘
 ```
 
-*Illustrative flow — staleness thresholds and scoring depend on corpus change velocity and acceptable freshness windows.*
+_Illustrative flow — staleness thresholds and scoring depend on corpus change velocity and acceptable freshness windows._
 
 **Model upgrade path** (zero-downtime):
 
@@ -113,20 +113,20 @@ Live Index (model v1)       Shadow Index (model v2)
 
 ```typescript
 interface EmbeddingRefreshConfig {
-  embeddingModel: string;           // model identifier, e.g. "text-embedding-3-large"
-  modelVersion: string;             // semantic version for migration tracking
-  stalenessThresholdDays: number;   // refresh if last_refreshed > N days ago (default: 7)
-  batchSize: number;                // documents per embedding API call (default: 100)
-  maxConcurrentBatches: number;     // parallel API calls (default: 4)
-  hashAlgorithm: 'md5' | 'sha256';  // document fingerprint algorithm (default: 'sha256')
+  embeddingModel: string; // model identifier, e.g. "text-embedding-3-large"
+  modelVersion: string; // semantic version for migration tracking
+  stalenessThresholdDays: number; // refresh if last_refreshed > N days ago (default: 7)
+  batchSize: number; // documents per embedding API call (default: 100)
+  maxConcurrentBatches: number; // parallel API calls (default: 4)
+  hashAlgorithm: "md5" | "sha256"; // document fingerprint algorithm (default: 'sha256')
 }
 
 interface DocumentRecord {
   id: string;
   content: string;
-  contentHash: string;              // fingerprint of current content
+  contentHash: string; // fingerprint of current content
   lastRefreshedAt: Date;
-  embeddingModelVersion: string;    // which model produced this vector
+  embeddingModelVersion: string; // which model produced this vector
   embedding?: number[];
 }
 
@@ -141,14 +141,14 @@ interface RefreshResult {
 
 **Configurability:**
 
-| Parameter | Default | Effect | Dangerous extreme |
-|---|---|---|---|
-| `stalenessThresholdDays` | 7 | How old before forced refresh | Too low → expensive; too high → stale content |
-| `batchSize` | 100 | Docs per API call | Too large → timeouts; too small → high request overhead |
-| `maxConcurrentBatches` | 4 | Parallel embedding calls | Too high → rate limits; too low → slow refresh |
-| `hashAlgorithm` | 'sha256' | Fingerprint for change detection | 'md5' → faster but higher collision risk |
+| Parameter                | Default  | Effect                           | Dangerous extreme                                       |
+| ------------------------ | -------- | -------------------------------- | ------------------------------------------------------- |
+| `stalenessThresholdDays` | 7        | How old before forced refresh    | Too low → expensive; too high → stale content           |
+| `batchSize`              | 100      | Docs per API call                | Too large → timeouts; too small → high request overhead |
+| `maxConcurrentBatches`   | 4        | Parallel embedding calls         | Too high → rate limits; too low → slow refresh          |
+| `hashAlgorithm`          | 'sha256' | Fingerprint for change detection | 'md5' → faster but higher collision risk                |
 
-*Defaults are starting points. Staleness threshold depends on how frequently your source content changes; batch size depends on your embedding provider's rate limits and document sizes.*
+_Defaults are starting points. Staleness threshold depends on how frequently your source content changes; batch size depends on your embedding provider's rate limits and document sizes._
 
 ### TypeScript Implementation
 
@@ -160,44 +160,45 @@ See [`src/py/`](src/py/) for the full implementation.
 
 ## Failure Modes
 
-| Failure Mode | Detection Signal | Mitigation |
-| --- | --- | --- |
-| **Mixed model versions in live index** — partial re-embed leaves old and new vectors coexisting; similarity scores become unreliable across the model boundary | `stalenessByModel` shows >1 distinct `embeddingModelVersion`; retrieval quality scores diverge between "old" and "new" document segments | Enforce atomic model upgrades: never upsert new-model vectors into a live index; use shadow index pattern with full-corpus cutover |
-| **Change detection misses content updates** — if only hash is checked but metadata changes (author, timestamp) don't alter content hash, semantically important updates go undetected | `last_refreshed_at` is recent but retrieval returns stale facts; user-reported factual errors on recently-updated documents | Include metadata fields in hash computation; implement time-bounded refresh as a fallback regardless of hash match |
-| **Refresh job timeout on large corpus** — batched re-embedding of large corpora exceeds job scheduler limits; job is killed mid-run, leaving partial updates | Job duration metrics; `stalenessByModel` shows inconsistent version coverage; refresh completion rate < 100% | Checkpoint progress by document ID; design refresh as restartable — query which docs still need refresh and resume from there |
-| **Embedding API rate limiting during bulk refresh** — concurrent batch refresh exhausts embedding provider rate limits; retries with backoff amplify total duration | 429 errors in refresh job logs; refresh batch latency spikes; `failed` count in `RefreshResult` is non-zero | Implement exponential backoff per batch; reduce `maxConcurrentBatches`; schedule large refreshes during off-peak hours |
-| **Silent staleness accumulation (6-month failure)** — documents accumulate without triggering staleness threshold because content hash didn't change, but the *context* they live in shifted (new competing products, changed regulations, deprecated features); embeddings are technically current but semantically outdated | No direct signal — this is the invisible failure. Catch it via periodic retrieval quality evaluation against known-good query sets; if retrieval precision drops without document hash changes, context-staleness is the likely cause | Schedule full corpus refresh quarterly regardless of hash state; implement semantic drift detection (compare embedding centroids over time); treat "no changes detected" for more than 3 months as a signal to investigate, not celebrate |
-| **Shadow index promotion before full coverage** — model upgrade completes re-embedding of 80% of corpus; promotion is triggered prematurely; 20% of queries hit missing vectors | Coverage metric in shadow index refresh job; promote only when `refreshed / total_documents >= 0.999`; validate with test query set before promotion | Gate promotion on explicit coverage threshold check; run holdout query set against shadow index before cutover |
+| Failure Mode                                                                                                                                                                                                                                                                                                                  | Detection Signal                                                                                                                                                                                                                      | Mitigation                                                                                                                                                                                                                                |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Mixed model versions in live index** — partial re-embed leaves old and new vectors coexisting; similarity scores become unreliable across the model boundary                                                                                                                                                                | `stalenessByModel` shows >1 distinct `embeddingModelVersion`; retrieval quality scores diverge between "old" and "new" document segments                                                                                              | Enforce atomic model upgrades: never upsert new-model vectors into a live index; use shadow index pattern with full-corpus cutover                                                                                                        |
+| **Change detection misses content updates** — if only hash is checked but metadata changes (author, timestamp) don't alter content hash, semantically important updates go undetected                                                                                                                                         | `last_refreshed_at` is recent but retrieval returns stale facts; user-reported factual errors on recently-updated documents                                                                                                           | Include metadata fields in hash computation; implement time-bounded refresh as a fallback regardless of hash match                                                                                                                        |
+| **Refresh job timeout on large corpus** — batched re-embedding of large corpora exceeds job scheduler limits; job is killed mid-run, leaving partial updates                                                                                                                                                                  | Job duration metrics; `stalenessByModel` shows inconsistent version coverage; refresh completion rate < 100%                                                                                                                          | Checkpoint progress by document ID; design refresh as restartable — query which docs still need refresh and resume from there                                                                                                             |
+| **Embedding API rate limiting during bulk refresh** — concurrent batch refresh exhausts embedding provider rate limits; retries with backoff amplify total duration                                                                                                                                                           | 429 errors in refresh job logs; refresh batch latency spikes; `failed` count in `RefreshResult` is non-zero                                                                                                                           | Implement exponential backoff per batch; reduce `maxConcurrentBatches`; schedule large refreshes during off-peak hours                                                                                                                    |
+| **Silent staleness accumulation (6-month failure)** — documents accumulate without triggering staleness threshold because content hash didn't change, but the _context_ they live in shifted (new competing products, changed regulations, deprecated features); embeddings are technically current but semantically outdated | No direct signal — this is the invisible failure. Catch it via periodic retrieval quality evaluation against known-good query sets; if retrieval precision drops without document hash changes, context-staleness is the likely cause | Schedule full corpus refresh quarterly regardless of hash state; implement semantic drift detection (compare embedding centroids over time); treat "no changes detected" for more than 3 months as a signal to investigate, not celebrate |
+| **Shadow index promotion before full coverage** — model upgrade completes re-embedding of 80% of corpus; promotion is triggered prematurely; 20% of queries hit missing vectors                                                                                                                                               | Coverage metric in shadow index refresh job; promote only when `refreshed / total_documents >= 0.999`; validate with test query set before promotion                                                                                  | Gate promotion on explicit coverage threshold check; run holdout query set against shadow index before cutover                                                                                                                            |
 
 ## Observability & Operations
 
 **Key metrics:**
 
-| Metric | Unit | Collection | What it signals |
-|---|---|---|---|
-| `embedding_refresh_staleness_p50` / `p95` | days | Gauge, per corpus | How old the average / tail embedding is |
-| `embedding_refresh_stale_doc_count` | count | Gauge | Documents past the staleness threshold |
-| `embedding_refresh_model_version_coverage` | fraction (0–1) | Gauge, per model version | Progress of model upgrade migrations |
-| `embedding_refresh_batch_duration_p99` | ms | Histogram | Slow batches → rate limiting or large docs |
-| `embedding_refresh_failed_count` | count | Counter | API errors during re-embedding |
-| `embedding_refresh_job_completion_rate` | fraction | Gauge | Whether scheduled jobs finish before the next one starts |
+| Metric                                     | Unit           | Collection               | What it signals                                          |
+| ------------------------------------------ | -------------- | ------------------------ | -------------------------------------------------------- |
+| `embedding_refresh_staleness_p50` / `p95`  | days           | Gauge, per corpus        | How old the average / tail embedding is                  |
+| `embedding_refresh_stale_doc_count`        | count          | Gauge                    | Documents past the staleness threshold                   |
+| `embedding_refresh_model_version_coverage` | fraction (0–1) | Gauge, per model version | Progress of model upgrade migrations                     |
+| `embedding_refresh_batch_duration_p99`     | ms             | Histogram                | Slow batches → rate limiting or large docs               |
+| `embedding_refresh_failed_count`           | count          | Counter                  | API errors during re-embedding                           |
+| `embedding_refresh_job_completion_rate`    | fraction       | Gauge                    | Whether scheduled jobs finish before the next one starts |
 
 **Alerting:**
 
-| Alert | Threshold | Severity | Notes |
-|---|---|---|---|
-| `stale_doc_count` high | > 5% of corpus | Warning | Refresh job may be falling behind |
-| `stale_doc_count` critical | > 20% of corpus | Critical | Retrieval quality is measurably impacted at this level |
-| `model_version_coverage` mixed | < 1.0 for > 24h during migration | Warning | Partial migration is active; don't leave it unresolved |
-| `failed_count` non-zero | > 0 over 1h window | Warning | API errors in refresh; investigate before they accumulate |
-| `job_completion_rate` low | < 1.0 for 2+ consecutive runs | Critical | Job isn't finishing; next run compounds the backlog |
-| `staleness_p95` too low | < 0.5 days | Warning | Refreshing too aggressively; check if cost/frequency is justified |
+| Alert                          | Threshold                        | Severity | Notes                                                             |
+| ------------------------------ | -------------------------------- | -------- | ----------------------------------------------------------------- |
+| `stale_doc_count` high         | > 5% of corpus                   | Warning  | Refresh job may be falling behind                                 |
+| `stale_doc_count` critical     | > 20% of corpus                  | Critical | Retrieval quality is measurably impacted at this level            |
+| `model_version_coverage` mixed | < 1.0 for > 24h during migration | Warning  | Partial migration is active; don't leave it unresolved            |
+| `failed_count` non-zero        | > 0 over 1h window               | Warning  | API errors in refresh; investigate before they accumulate         |
+| `job_completion_rate` low      | < 1.0 for 2+ consecutive runs    | Critical | Job isn't finishing; next run compounds the backlog               |
+| `staleness_p95` too low        | < 0.5 days                       | Warning  | Refreshing too aggressively; check if cost/frequency is justified |
 
-*These thresholds are starting points. How quickly staleness matters depends on how frequently your source content changes and how freshness-sensitive your use case is.*
+_These thresholds are starting points. How quickly staleness matters depends on how frequently your source content changes and how freshness-sensitive your use case is._
 
 **Runbook:**
 
 When `stale_doc_count` critical fires:
+
 1. Check `job_completion_rate` — if < 1.0, the refresh job isn't finishing. Check job logs for timeouts or OOM.
 2. Check `failed_count` — if elevated, check embedding API status and rate limit headroom.
 3. Run `SELECT COUNT(*), embedding_model_version FROM document_records GROUP BY embedding_model_version` — if multiple model versions appear, a migration may have stalled mid-way.
@@ -208,12 +209,12 @@ When `stale_doc_count` critical fires:
 
 **Tuning levers:**
 
-| Lever | Safe range | Dangerous extreme | When to adjust |
-|---|---|---|---|
-| `stalenessThresholdDays` | 1–30 days | < 1 day (cost spike) or > 60 days (semantic drift risk) | Lower when source content changes frequently; raise for mostly-static corpora |
-| `batchSize` | 50–200 docs | > 500 (timeout risk) or < 10 (request overhead dominates) | Tune based on average document token length and provider batch limits |
-| `maxConcurrentBatches` | 2–8 | > 16 (rate limit exhaustion) | Scale up only after verifying provider rate limits |
-| Refresh schedule | Hourly to weekly | Sub-hourly for large corpora | Set based on acceptable staleness window, not arbitrary defaults |
+| Lever                    | Safe range       | Dangerous extreme                                         | When to adjust                                                                |
+| ------------------------ | ---------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `stalenessThresholdDays` | 1–30 days        | < 1 day (cost spike) or > 60 days (semantic drift risk)   | Lower when source content changes frequently; raise for mostly-static corpora |
+| `batchSize`              | 50–200 docs      | > 500 (timeout risk) or < 10 (request overhead dominates) | Tune based on average document token length and provider batch limits         |
+| `maxConcurrentBatches`   | 2–8              | > 16 (rate limit exhaustion)                              | Scale up only after verifying provider rate limits                            |
+| Refresh schedule         | Hourly to weekly | Sub-hourly for large corpora                              | Set based on acceptable staleness window, not arbitrary defaults              |
 
 **Drift signals:**
 
@@ -224,7 +225,7 @@ When `stale_doc_count` critical fires:
 
 **Silent degradation:**
 
-At Month 3: The refresh job is running, hash-based change detection is working, and freshness metrics look fine. But a category of documents that used to be authoritative is now stale in a way that doesn't change the text hash — they reference products, policies, or procedures that have changed *elsewhere* in the corpus but the documents themselves haven't been edited. Retrieval returns these documents confidently. The LLM generates answers based on a world model that's three months out of date in specific, non-obvious ways.
+At Month 3: The refresh job is running, hash-based change detection is working, and freshness metrics look fine. But a category of documents that used to be authoritative is now stale in a way that doesn't change the text hash — they reference products, policies, or procedures that have changed _elsewhere_ in the corpus but the documents themselves haven't been edited. Retrieval returns these documents confidently. The LLM generates answers based on a world model that's three months out of date in specific, non-obvious ways.
 
 At Month 6: The embedding model used at launch has been superseded by two generations. The performance gap is measurable on your domain. But migration requires a full corpus re-embed and a shadow index rollout. Without having built the infrastructure for this at the start, the path is a painful weekend of downtime rather than a background job.
 
@@ -234,11 +235,11 @@ Proactive check: Run a monthly retrieval quality evaluation against a curated qu
 
 See [`cost-analysis.md`](cost-analysis.md) for detailed numbers.
 
-| Scale | Additional Cost | ROI vs. No Pattern |
-| --- | --- | --- |
-| 1K req/day | +$0.15–$2.40/day | Protects retrieval quality; cost depends heavily on corpus size and change rate |
-| 10K req/day | +$1.50–$24/day | Required for production-grade RAG; cost of stale retrieval exceeds refresh infrastructure |
-| 100K req/day | +$15–$240/day | Amortized cost is small relative to total LLM spend; manual refresh at this scale isn't viable |
+| Scale        | Additional Cost   | ROI vs. No Pattern                                                                                                                         |
+| ------------ | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1K req/day   | +$0.065–$0.65/day | Negligible. Protects retrieval quality and enables zero-downtime model upgrades.                                                           |
+| 10K req/day  | +$0.65–$6.50/day  | Small relative to total LLM spend. The cost of stale retrieval (user-reported errors, support volume) typically exceeds this within weeks. |
+| 100K req/day | +$6.50–$65/day    | Manual refresh at this scale isn't operationally viable. Refresh infrastructure is a requirement, not an optimization.                     |
 
 ## Testing
 
@@ -258,11 +259,11 @@ Run: `cd src/ts && npm test` / `cd src/py && python -m pytest`
 - Small corpora (< ~10K chunks) where full re-embedding takes seconds and costs pennies — at that scale, the incremental machinery may be more complex than just re-embedding everything on every change
 - Very high-frequency document updates (sub-minute) where event-driven refresh is the only viable model — the batch-and-schedule approach described here doesn't fit streaming document ingestion at that cadence
 
-## Companion Content
+<!-- ## Companion Content
 
 - Blog post: [Embedding Refresh — Deep Dive](https://prompt-deploy.com/embedding-refresh) (coming soon)
 - Related patterns:
   - [Chunking Strategies](../chunking-strategies/) (#19, S6) — re-chunking triggers re-embedding; changing chunk boundaries requires full index rebuild
   - [Index Maintenance](../index-maintenance/) (#30, S8) — refresh and maintenance are the two pillars of RAG data health; refresh keeps content current, maintenance keeps the index performant
   - [Drift Detection](../../observability/drift-detection/) (#28, S8) — detects when stale embeddings cause retrieval quality drift at the output level
-  - [Semantic Caching](../../cost-control/semantic-caching/) (#12, S4) — stale embeddings affect cache similarity matching; cache invalidation strategy needs to account for embedding refresh cycles
+  - [Semantic Caching](../../cost-control/semantic-caching/) (#12, S4) — stale embeddings affect cache similarity matching; cache invalidation strategy needs to account for embedding refresh cycles -->
