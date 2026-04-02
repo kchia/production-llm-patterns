@@ -83,18 +83,18 @@ The `IndexMaintenanceScheduler` coordinates three responsibilities: measuring in
 
 ```typescript
 interface IndexHealthMetrics {
-  tombstoneRatio: number;        // deleted vectors / total vectors
-  segmentCount: number;          // active segments (fragmentation proxy)
-  avgSegmentSize: number;        // vectors per segment
-  payloadIndexCoverage: number;  // fraction of filter fields with indexes
-  lastMaintenanceMs: number;     // time since last maintenance run
+  tombstoneRatio: number; // deleted vectors / total vectors
+  segmentCount: number; // active segments (fragmentation proxy)
+  avgSegmentSize: number; // vectors per segment
+  payloadIndexCoverage: number; // fraction of filter fields with indexes
+  lastMaintenanceMs: number; // time since last maintenance run
 }
 
 type MaintenanceOperation =
-  | { type: 'vacuum'; reason: string }
-  | { type: 'compact_segments'; reason: string }
-  | { type: 'optimize_payload_index'; fields: string[]; reason: string }
-  | { type: 'rebuild'; reason: string };
+  | { type: "vacuum"; reason: string }
+  | { type: "compact_segments"; reason: string }
+  | { type: "optimize_payload_index"; fields: string[]; reason: string }
+  | { type: "rebuild"; reason: string };
 
 interface IndexMaintenanceScheduler {
   checkHealth(collectionName: string): Promise<IndexHealthMetrics>;
@@ -113,44 +113,45 @@ See [`src/py/`](src/py/) for the full implementation.
 
 ## Failure Modes
 
-| Failure Mode | Detection Signal | Mitigation |
-| --- | --- | --- |
-| **Maintenance during high traffic** — running compaction or vacuum during peak load degrades query latency as the optimizer competes for I/O | p95 latency spike during maintenance window; CPU > 80% during scheduled run | Schedule maintenance during low-traffic windows; implement a traffic gate that delays maintenance if request rate exceeds threshold |
-| **Vacuum loop** — maintenance triggers, tombstone ratio drops below threshold, document churn creates new tombstones faster than cleanup, maintenance triggers again within minutes | Maintenance run frequency metric shows runs < 10 min apart; CPU consistently elevated | Add a minimum interval between maintenance runs (cooldown period); alert if maintenance frequency exceeds 1 run/hour |
-| **Rebuild blocking reads** — full index rebuild on large collections (500K+ vectors) takes 20–60 min; if the operation blocks reads, users see timeout errors | Query error rate spike during rebuild; p99 latency > 10× normal | Use shadow index pattern: build new index on a copy, then atomically swap; never rebuild in place on live traffic |
-| **Payload index drift** — new filter fields added to queries but not indexed; queries fall back to full scans silently | Queries with new filter fields take 10–100× longer than indexed equivalents; no error, just latency | Track filter field usage in query logs; compare against indexed fields; alert when unindexed filter fields appear in production queries |
-| **Silent recall degradation** — tombstones accumulate below the vacuum threshold for months; recall drops 10–20% before maintenance triggers | Recall@10 in offline eval drifts downward over weeks; no operational alert fires | Run scheduled offline recall evaluation against a held-out query set; alert on 5% week-over-week recall drop; don't rely solely on operational metrics |
-| **Segment explosion from bulk ingest** — batch loading creates dozens of small segments; each adds per-lookup overhead; startup time and memory grow | Segment count metric > 50; memory usage per query increases; startup time > 2× baseline | Trigger segment compaction after bulk ingest completes; configure ingest batch sizes to target fewer, larger segments |
+| Failure Mode                                                                                                                                                                        | Detection Signal                                                                                    | Mitigation                                                                                                                                             |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Maintenance during high traffic** — running compaction or vacuum during peak load degrades query latency as the optimizer competes for I/O                                        | p95 latency spike during maintenance window; CPU > 80% during scheduled run                         | Schedule maintenance during low-traffic windows; implement a traffic gate that delays maintenance if request rate exceeds threshold                    |
+| **Vacuum loop** — maintenance triggers, tombstone ratio drops below threshold, document churn creates new tombstones faster than cleanup, maintenance triggers again within minutes | Maintenance run frequency metric shows runs < 10 min apart; CPU consistently elevated               | Add a minimum interval between maintenance runs (cooldown period); alert if maintenance frequency exceeds 1 run/hour                                   |
+| **Rebuild blocking reads** — full index rebuild on large collections (500K+ vectors) takes 20–60 min; if the operation blocks reads, users see timeout errors                       | Query error rate spike during rebuild; p99 latency > 10× normal                                     | Use shadow index pattern: build new index on a copy, then atomically swap; never rebuild in place on live traffic                                      |
+| **Payload index drift** — new filter fields added to queries but not indexed; queries fall back to full scans silently                                                              | Queries with new filter fields take 10–100× longer than indexed equivalents; no error, just latency | Track filter field usage in query logs; compare against indexed fields; alert when unindexed filter fields appear in production queries                |
+| **Silent recall degradation** — tombstones accumulate below the vacuum threshold for months; recall drops 10–20% before maintenance triggers                                        | Recall@10 in offline eval drifts downward over weeks; no operational alert fires                    | Run scheduled offline recall evaluation against a held-out query set; alert on 5% week-over-week recall drop; don't rely solely on operational metrics |
+| **Segment explosion from bulk ingest** — batch loading creates dozens of small segments; each adds per-lookup overhead; startup time and memory grow                                | Segment count metric > 50; memory usage per query increases; startup time > 2× baseline             | Trigger segment compaction after bulk ingest completes; configure ingest batch sizes to target fewer, larger segments                                  |
 
 ## Observability & Operations
 
 ### Key Metrics
 
-| Metric | Collection Method | Normal Range | Meaning |
-| --- | --- | --- | --- |
-| `tombstone_ratio` | Vector DB API (collection stats) | < 0.10 | Fraction of vectors marked deleted but not yet cleaned |
-| `segment_count` | Vector DB API or internal metrics | < 20 | Fragmentation proxy; high count increases per-query overhead |
-| `maintenance_run_duration_ms` | Instrumented in scheduler | < 60s (vacuum), < 5min (compact) | Tracks whether maintenance is keeping up with churn |
-| `recall_at_10_offline` | Scheduled eval harness against held-out queries | > 0.80 (varies by use case) | The only metric that catches silent graph degradation |
-| `query_p95_latency_ms` | APM / trace spans | Establish baseline; alert on 20% increase | Early signal for fragmentation or tombstone accumulation |
-| `maintenance_frequency` | Counter per run type | < 1 vacuum/hour | Detects vacuum loops |
+| Metric                        | Collection Method                               | Normal Range                              | Meaning                                                      |
+| ----------------------------- | ----------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------ |
+| `tombstone_ratio`             | Vector DB API (collection stats)                | < 0.10                                    | Fraction of vectors marked deleted but not yet cleaned       |
+| `segment_count`               | Vector DB API or internal metrics               | < 20                                      | Fragmentation proxy; high count increases per-query overhead |
+| `maintenance_run_duration_ms` | Instrumented in scheduler                       | < 60s (vacuum), < 5min (compact)          | Tracks whether maintenance is keeping up with churn          |
+| `recall_at_10_offline`        | Scheduled eval harness against held-out queries | > 0.80 (varies by use case)               | The only metric that catches silent graph degradation        |
+| `query_p95_latency_ms`        | APM / trace spans                               | Establish baseline; alert on 20% increase | Early signal for fragmentation or tombstone accumulation     |
+| `maintenance_frequency`       | Counter per run type                            | < 1 vacuum/hour                           | Detects vacuum loops                                         |
 
 ### Alerting
 
-| Alert | Threshold | Severity | First Check |
-| --- | --- | --- | --- |
-| Tombstone ratio high | > 0.20 for 30 min | Warning | Run manual vacuum; check if churn rate has increased |
-| Tombstone ratio critical | > 0.40 | Critical | Vacuum immediately; investigate whether document deletion pipeline is running correctly |
-| Segment count high | > 50 segments | Warning | Trigger compaction; review recent bulk ingest operations |
-| Recall drop | > 5% week-over-week | Warning | Check tombstone ratio; review recent index changes; consider compaction or rebuild |
-| Maintenance duration exceeded | > 2× expected duration | Warning | Check available CPU/memory; may need to reschedule to lower-traffic window |
-| Maintenance frequency exceeded | > 2 runs/hour | Warning | Investigate churn source; add cooldown to maintenance scheduler |
+| Alert                          | Threshold              | Severity | First Check                                                                             |
+| ------------------------------ | ---------------------- | -------- | --------------------------------------------------------------------------------------- |
+| Tombstone ratio high           | > 0.20 for 30 min      | Warning  | Run manual vacuum; check if churn rate has increased                                    |
+| Tombstone ratio critical       | > 0.40                 | Critical | Vacuum immediately; investigate whether document deletion pipeline is running correctly |
+| Segment count high             | > 50 segments          | Warning  | Trigger compaction; review recent bulk ingest operations                                |
+| Recall drop                    | > 5% week-over-week    | Warning  | Check tombstone ratio; review recent index changes; consider compaction or rebuild      |
+| Maintenance duration exceeded  | > 2× expected duration | Warning  | Check available CPU/memory; may need to reschedule to lower-traffic window              |
+| Maintenance frequency exceeded | > 2 runs/hour          | Warning  | Investigate churn source; add cooldown to maintenance scheduler                         |
 
 > These thresholds are starting points. A collection with 10K vectors and high daily churn needs tighter tombstone thresholds than a 1M-vector collection with 0.1% daily churn.
 
 ### Runbook
 
 **Tombstone ratio warning (> 0.20):**
+
 1. Check collection stats: confirm tombstone_ratio and total vector count
 2. Check recent deletion volume — is there an ongoing batch delete job?
 3. If deletion job is still running, wait for completion then trigger vacuum
@@ -158,6 +159,7 @@ See [`src/py/`](src/py/) for the full implementation.
 5. Monitor tombstone_ratio for 10 min post-vacuum; if it stays elevated, check for vacuum errors in logs
 
 **Recall drop warning (> 5% week-over-week):**
+
 1. Run offline eval with full held-out query set to confirm the drop
 2. Check tombstone_ratio — if > 0.15, run vacuum first and re-eval
 3. Check segment_count — if > 20, run compaction and re-eval
@@ -165,6 +167,7 @@ See [`src/py/`](src/py/) for the full implementation.
 5. If recall still doesn't recover after rebuild, the issue may be embedding staleness — check [Embedding Refresh](../embedding-refresh/) pattern
 
 **Maintenance timeout:**
+
 1. Check CPU and memory during maintenance window
 2. If resource-constrained, reduce maintenance batch size or shift window
 3. If rebuild is the operation timing out, verify shadow index capability — never rebuild in place on > 100K vectors
@@ -173,13 +176,13 @@ See [`src/py/`](src/py/) for the full implementation.
 
 ### Tuning Levers
 
-| Parameter | Default | Effect | Dangerous Extreme |
-| --- | --- | --- | --- |
-| `tombstoneThreshold` | 0.15 | Lower = more frequent vacuum, cleaner graph, higher CPU overhead | < 0.05: constant vacuuming; > 0.40: graph degradation before cleanup triggers |
-| `maxSegments` | 20 | Lower = more aggressive compaction, better query perf, more I/O during compaction | < 5: compaction running constantly; > 100: per-query overhead becomes significant |
-| `maintenanceCooldownMs` | 3,600,000 (1hr) | Prevents vacuum loops; increase if churn is sustained | 0: no protection against runaway maintenance |
-| `maintenanceWindowHours` | [2, 6] (2–6 AM) | Confine maintenance to off-peak; shift if traffic pattern changes | Business hours: maintenance competes with user queries |
-| `maxMaintenanceDurationMs` | 300,000 (5 min) | Hard stop for maintenance runs; prevents blocking reads indefinitely | Unlimited: full rebuild can block for 60+ min |
+| Parameter                  | Default         | Effect                                                                            | Dangerous Extreme                                                                 |
+| -------------------------- | --------------- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `tombstoneThreshold`       | 0.15            | Lower = more frequent vacuum, cleaner graph, higher CPU overhead                  | < 0.05: constant vacuuming; > 0.40: graph degradation before cleanup triggers     |
+| `maxSegments`              | 20              | Lower = more aggressive compaction, better query perf, more I/O during compaction | < 5: compaction running constantly; > 100: per-query overhead becomes significant |
+| `maintenanceCooldownMs`    | 3,600,000 (1hr) | Prevents vacuum loops; increase if churn is sustained                             | 0: no protection against runaway maintenance                                      |
+| `maintenanceWindowHours`   | [2, 6] (2–6 AM) | Confine maintenance to off-peak; shift if traffic pattern changes                 | Business hours: maintenance competes with user queries                            |
+| `maxMaintenanceDurationMs` | 300,000 (5 min) | Hard stop for maintenance runs; prevents blocking reads indefinitely              | Unlimited: full rebuild can block for 60+ min                                     |
 
 ### Drift Signals
 
@@ -202,22 +205,22 @@ At Month 6: Recall@10 is down ~10% from initial measurements. Segment count has 
 
 See [`cost-analysis.md`](cost-analysis.md) for detailed numbers.
 
-| Scale        | Additional Cost | ROI vs. No Pattern |
-| ------------ | --------------- | ------------------ |
+| Scale        | Additional Cost | ROI vs. No Pattern                                                  |
+| ------------ | --------------- | ------------------------------------------------------------------- |
 | 1K req/day   | −$0.20/day      | Marginal; correctness value outweighs dollar savings at small scale |
-| 10K req/day  | −$2.36/day      | Positive ROI; avoids ~300 re-queries/day at GPT-4o pricing |
-| 100K req/day | −$23.96/day     | Strong ROI; maintenance overhead is <0.2% of avoided re-query cost |
+| 10K req/day  | −$2.36/day      | Positive ROI; avoids ~300 re-queries/day at GPT-4o pricing          |
+| 100K req/day | −$23.96/day     | Strong ROI; maintenance overhead is <0.2% of avoided re-query cost  |
 
 ## Testing
 
 How to verify this pattern works correctly. See test files in `src/ts/` and `src/py/`.
 
-| Test Category | Coverage |
-| --- | --- |
-| **Unit** | Health checker metric calculation; threshold evaluator logic (verify correct operation is selected for each metric combination); planner prioritization (vacuum before compact before rebuild) |
-| **Failure mode** | Tombstone accumulation detection; segment explosion detection; payload index coverage gap; maintenance cooldown enforcement (verify vacuum loop prevention); silent recall degradation via mock provider returning degraded recall scores |
-| **Integration** | Full maintenance cycle from health check to operation execution to verification; concurrent read requests during maintenance (verify reads aren't blocked); maintenance scheduling with traffic gate (maintenance deferred when request rate is high) |
-| **How to run** | `cd src/ts && npm test` / `cd src/py && python -m pytest` |
+| Test Category    | Coverage                                                                                                                                                                                                                                              |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Unit**         | Health checker metric calculation; threshold evaluator logic (verify correct operation is selected for each metric combination); planner prioritization (vacuum before compact before rebuild)                                                        |
+| **Failure mode** | Tombstone accumulation detection; segment explosion detection; payload index coverage gap; maintenance cooldown enforcement (verify vacuum loop prevention); silent recall degradation via mock provider returning degraded recall scores             |
+| **Integration**  | Full maintenance cycle from health check to operation execution to verification; concurrent read requests during maintenance (verify reads aren't blocked); maintenance scheduling with traffic gate (maintenance deferred when request rate is high) |
+| **How to run**   | `cd src/ts && npm test` / `cd src/py && python -m pytest`                                                                                                                                                                                             |
 
 ## When This Advice Stops Applying
 
@@ -227,11 +230,11 @@ How to verify this pattern works correctly. See test files in `src/ts/` and `src
 - **Very small collections (< 10K vectors)** — at this scale, query latency is dominated by factors other than index health. The overhead of running maintenance scheduler infrastructure exceeds the benefit.
 - **Collections that tolerate approximate results** — if your RAG system already has downstream quality filtering and occasional recall drops don't affect user-facing quality, the operational overhead of tight maintenance thresholds may not be worth it.
 
-## Companion Content
+<!-- ## Companion Content
 
 - Blog post: [Index Maintenance — Deep Dive](https://prompt-deploy.com/index-maintenance) (coming soon)
 - Related patterns:
   - [Embedding Refresh](../embedding-refresh/) — refresh updates content; maintenance ensures index health. The two are complementary — refresh without maintenance can still leave a degraded graph structure.
   - [Chunking Strategies](../chunking-strategies/) — chunk sizes affect index structure and maintenance requirements; smaller chunks mean more vectors and faster tombstone accumulation for the same document churn rate.
   - [Drift Detection](../../observability/drift-detection/) — index degradation can manifest as quality drift in output monitoring; drift detection catches the symptom, index maintenance addresses the cause.
-  - [Latency Budget](../../performance/latency-budget/) — index fragmentation directly impacts retrieval latency; latency budgets surface the symptom that index maintenance addresses.
+  - [Latency Budget](../../performance/latency-budget/) — index fragmentation directly impacts retrieval latency; latency budgets surface the symptom that index maintenance addresses. -->
