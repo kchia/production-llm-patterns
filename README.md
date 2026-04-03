@@ -67,7 +67,7 @@ These four system types represent distinct operational profiles — each creates
 | [Token Budget Middleware](patterns/cost-control/token-budget-middleware/)      | Required    | Required    | Recommended | Required    |
 | [Semantic Caching](patterns/cost-control/semantic-caching/)                    | High ROI    | Low ROI     | N/A         | High ROI    |
 | [Model Routing](patterns/cost-control/model-routing/)                         | Recommended | High ROI    | Recommended | High ROI    |
-| Cost Dashboard                                                                | Recommended | Recommended | Recommended | Recommended |
+| [Cost Dashboard](patterns/cost-control/cost-dashboard/)                       | Recommended | Recommended | Recommended | Recommended |
 | **Observability**                                                             |             |             |             |             |
 | [Structured Tracing](patterns/observability/structured-tracing/)              | Required    | Critical    | Required    | Recommended |
 | [Output Quality Monitoring](patterns/observability/output-quality-monitoring/) | Required    | Required    | Recommended | Required    |

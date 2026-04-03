@@ -6,9 +6,9 @@
 
 You're spending money on LLM APIs but can't answer basic questions: Which feature costs the most? Which model is most cost-effective for which task? Is spending trending up or down? Who or what is driving the increase?
 
-The way I think about it: provider dashboards show you aggregate spend by model and day — they tell you *that* GPT-4o spend spiked on Tuesday, not *which* feature, deploy, or user cohort caused it. Without attribution metadata flowing through every LLM call, you're managing costs reactively — panicking at month-end invoices instead of making informed allocation decisions.
+The way I think about it: provider dashboards show you aggregate spend by model and day — they tell you _that_ GPT-4o spend spiked on Tuesday, not _which_ feature, deploy, or user cohort caused it. Without attribution metadata flowing through every LLM call, you're managing costs reactively — panicking at month-end invoices instead of making informed allocation decisions.
 
-The gap becomes acute fast. A mid-size team's LLM bill can reach $47K/month, spread across a support chatbot, document analysis, code generation, and a RAG pipeline — but a single shared API key makes all of it look like one undifferentiated pool of tokens. One undetected prompt regression adding 800 tokens per request, or a retry strategy routing failures to a 16x more expensive model, compounds silently for weeks before anything surfaces. In a real 2025 incident, a developer was billed $67 in two days (against a normal run-rate of under a dollar) because an unvalidated URL parameter let external parties select premium models — discovered only when the OpenAI invoice landed, not when it started.
+The gap becomes acute fast. A mid-size team's LLM bill can reach `$47K/month`, spread across a support chatbot, document analysis, code generation, and a RAG pipeline — but a single shared API key makes all of it look like one undifferentiated pool of tokens. One undetected prompt regression adding 800 tokens per request, or a retry strategy routing failures to a [16x more expensive model](https://openai.com/api/pricing/) (e.g., GPT-4o-mini at `$0.15/1M` input tokens vs. GPT-4o at `$2.50/1M`), compounds silently for weeks before anything surfaces. In a [real 2025 incident](https://community.openai.com/t/unexpected-67-token-usage-spike-with-models-i-never-use/1144995), a developer was billed $67 in two days (against a normal run-rate of under a dollar) after unexpected model usage appeared on the bill — discovered only when the OpenAI invoice landed, not when it started.
 
 [Token Budget Middleware](../token-budget-middleware/) enforces limits. This pattern tells you where the money actually goes.
 
@@ -16,7 +16,7 @@ The gap becomes acute fast. A mid-size team's LLM bill can reach $47K/month, spr
 
 The naive approach is watching the provider's dashboard and logging token counts in application logs.
 
-Provider dashboards are useful for detecting that something spiked, but they can't tell you *why*. When you have a $47K bill and four features sharing a key, you can identify the model, not the feature. The attribution gap is unbridgeable without instrumentation on your side.
+Provider dashboards are useful for detecting that something spiked, but they can't tell you _why_. When you have a $47K bill and four features sharing a key, you can identify the model, not the feature. The attribution gap is unbridgeable without instrumentation on your side.
 
 Logging token counts in app logs is slightly better — at least you have raw data — but correlating logs manually is work you'll skip under pressure. No alerting, no trending, no cross-request aggregation. By the time you notice the anomaly, it's been compounding for days.
 
@@ -90,7 +90,7 @@ LLM Call Site
 interface CostEvent {
   timestamp: Date;
   requestId: string;
-  feature: string;           // mandatory — attribution breaks without this
+  feature: string; // mandatory — attribution breaks without this
   model: string;
   promptVersion: string;
   userId?: string;
@@ -99,7 +99,7 @@ interface CostEvent {
   outputTokens: number;
   costUsd: number;
   latencyMs: number;
-  tags: Record<string, string>;  // extensible for future dimensions
+  tags: Record<string, string>; // extensible for future dimensions
 }
 
 interface CostDashboard {
@@ -108,10 +108,10 @@ interface CostDashboard {
 
   // Query spend aggregated by dimension
   query(params: {
-    groupBy: 'feature' | 'model' | 'user' | 'promptVersion' | 'team';
+    groupBy: "feature" | "model" | "user" | "promptVersion" | "team";
     startTime: Date;
     endTime: Date;
-    filters?: Partial<Pick<CostEvent, 'feature' | 'model' | 'userId'>>;
+    filters?: Partial<Pick<CostEvent, "feature" | "model" | "userId">>;
   }): Promise<SpendSummary[]>;
 
   // Compute cost from token counts using current price table
@@ -124,14 +124,14 @@ interface CostDashboard {
 
 ### Configurability
 
-| Parameter | Default | What It Affects |
-|---|---|---|
-| `priceRefreshIntervalMs` | `3_600_000` (1h) | How often model prices are fetched from source. Staleness leads to cost miscalculation. |
-| `spikeSensitivity` | `2.5` | Multiplier over rolling baseline before a spike alert fires. Lower = more alerts. |
-| `concentrationRiskThreshold` | `0.40` | Fraction of total spend from one dimension before a concentration alert fires. |
-| `retentionDays` | `90` | How long raw cost events are kept before rollup/deletion. Longer = more storage cost. |
-| `requiredTags` | `['feature']` | Tags that must be present on every event. Missing tags fail loudly rather than silently polluting dimensions. |
-| `rollupIntervalMinutes` | `60` | Granularity of pre-aggregated time buckets. Finer = more storage, faster queries. |
+| Parameter                    | Default          | What It Affects                                                                                               |
+| ---------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------- |
+| `priceRefreshIntervalMs`     | `3_600_000` (1h) | How often model prices are fetched from source. Staleness leads to cost miscalculation.                       |
+| `spikeSensitivity`           | `2.5`            | Multiplier over rolling baseline before a spike alert fires. Lower = more alerts.                             |
+| `concentrationRiskThreshold` | `0.40`           | Fraction of total spend from one dimension before a concentration alert fires.                                |
+| `retentionDays`              | `90`             | How long raw cost events are kept before rollup/deletion. Longer = more storage cost.                         |
+| `requiredTags`               | `['feature']`    | Tags that must be present on every event. Missing tags fail loudly rather than silently polluting dimensions. |
+| `rollupIntervalMinutes`      | `60`             | Granularity of pre-aggregated time buckets. Finer = more storage, faster queries.                             |
 
 > These are starting points. The right spike sensitivity depends on your baseline variance — a system with noisy traffic needs a higher threshold than one with stable daily patterns.
 
@@ -145,40 +145,40 @@ See [`src/py/`](src/py/) for the full implementation.
 
 ## Failure Modes
 
-| Failure Mode | Detection Signal | Mitigation |
-|---|---|---|
-| **Missing attribution tags** — requests recorded with no `feature` or `userId`, polluting `unknown` dimension | `unknown` dimension grows as a share of total spend; alertable if `unknown` > X% | Enforce required tags at middleware level — fail loudly (log + counter-increment) on missing tags rather than silently recording to `unknown` |
-| **Stale price table** — model prices changed but dashboard still uses old values; cost calculations diverge from actual bill | Dashboard total vs. provider invoice diverges by >5% at month-end reconciliation | Refresh prices periodically from a versioned source; alert on refresh failures; show "price last updated" timestamp prominently in UI |
-| **Spike alert fatigue** — threshold set too low for actual traffic variance, generating constant noise | Alert channel floods; on-call starts ignoring cost alerts | Tune sensitivity per-dimension rather than globally; use rolling baseline (7d) rather than fixed absolute threshold |
-| **Test traffic contaminating production metrics** — dev/staging requests recorded to the same store | Dashboard shows inflated spend; per-user metrics are meaningless | Tag requests with `environment` at middleware level; partition storage or filter at query time; make test traffic opt-out impossible by default |
-| **Shared credentials destroying attribution** — multiple services use one API key; no way to separate spend | All spend appears under single undifferentiated pool in provider dashboard | One API key per service/team; enforce at infrastructure level, not application level |
-| **Silent price drift** (the 6-month failure) — model prices drop or provider introduces a cheaper alias, but the dashboard uses hardcoded prices; teams optimize away cheap usage and leave expensive usage untouched | Dashboard cost totals diverge from invoice by an increasing percentage over months; optimization decisions based on stale data are wrong | Automate price table refresh and alert on stale data; reconcile dashboard totals against provider invoice monthly |
-| **Rollup gap on restart** — service restarts during rollup window; events in the gap are counted in raw store but missed by pre-aggregation | Dashboard totals < raw event sum for a window around the restart | Make rollup idempotent — reprocess windows on startup; use an at-least-once event pipeline |
-| **Dimension explosion** — high-cardinality tags (e.g., per-request IDs as `userId`) cause storage and query performance to degrade | Query latency increases; storage costs climb month-over-month | Validate tag cardinality at ingestion; cap unique values per dimension; document that `userId` should be a real user ID, not a session ID |
+| Failure Mode                                                                                                                                                                                                          | Detection Signal                                                                                                                         | Mitigation                                                                                                                                      |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Missing attribution tags** — requests recorded with no `feature` or `userId`, polluting `unknown` dimension                                                                                                         | `unknown` dimension grows as a share of total spend; alertable if `unknown` > X%                                                         | Enforce required tags at middleware level — fail loudly (log + counter-increment) on missing tags rather than silently recording to `unknown`   |
+| **Stale price table** — model prices changed but dashboard still uses old values; cost calculations diverge from actual bill                                                                                          | Dashboard total vs. provider invoice diverges by >5% at month-end reconciliation                                                         | Refresh prices periodically from a versioned source; alert on refresh failures; show "price last updated" timestamp prominently in UI           |
+| **Spike alert fatigue** — threshold set too low for actual traffic variance, generating constant noise                                                                                                                | Alert channel floods; on-call starts ignoring cost alerts                                                                                | Tune sensitivity per-dimension rather than globally; use rolling baseline (7d) rather than fixed absolute threshold                             |
+| **Test traffic contaminating production metrics** — dev/staging requests recorded to the same store                                                                                                                   | Dashboard shows inflated spend; per-user metrics are meaningless                                                                         | Tag requests with `environment` at middleware level; partition storage or filter at query time; make test traffic opt-out impossible by default |
+| **Shared credentials destroying attribution** — multiple services use one API key; no way to separate spend                                                                                                           | All spend appears under single undifferentiated pool in provider dashboard                                                               | One API key per service/team; enforce at infrastructure level, not application level                                                            |
+| **Silent price drift** (the 6-month failure) — model prices drop or provider introduces a cheaper alias, but the dashboard uses hardcoded prices; teams optimize away cheap usage and leave expensive usage untouched | Dashboard cost totals diverge from invoice by an increasing percentage over months; optimization decisions based on stale data are wrong | Automate price table refresh and alert on stale data; reconcile dashboard totals against provider invoice monthly                               |
+| **Rollup gap on restart** — service restarts during rollup window; events in the gap are counted in raw store but missed by pre-aggregation                                                                           | Dashboard totals < raw event sum for a window around the restart                                                                         | Make rollup idempotent — reprocess windows on startup; use an at-least-once event pipeline                                                      |
+| **Dimension explosion** — high-cardinality tags (e.g., per-request IDs as `userId`) cause storage and query performance to degrade                                                                                    | Query latency increases; storage costs climb month-over-month                                                                            | Validate tag cardinality at ingestion; cap unique values per dimension; document that `userId` should be a real user ID, not a session ID       |
 
 ## Observability & Operations
 
 **Key metrics:**
 
-| Metric | Unit | What It Signals |
-|---|---|---|
-| `cost_dashboard.events_recorded_total` | count | Volume of requests being tracked — drop signals middleware bypass |
-| `cost_dashboard.missing_tag_total{tag}` | count | Attribution quality — should trend to zero after instrumentation is complete |
-| `cost_dashboard.price_table_age_seconds` | seconds | Data freshness — alert if > 2h (refresh failed) |
-| `cost_dashboard.rollup_lag_seconds` | seconds | Aggregation health — should be < 5min in normal operation |
-| `cost_dashboard.spend_usd_total{feature,model}` | USD | Primary business metric — watch for unexpected jumps |
-| `cost_dashboard.alert_fired_total{type}` | count | Alert system health — sustained zero may indicate thresholds too high |
-| `cost_dashboard.query_latency_p99_ms` | ms | Query API health — alert if > 500ms (index degradation or data volume issue) |
+| Metric                                          | Unit    | What It Signals                                                              |
+| ----------------------------------------------- | ------- | ---------------------------------------------------------------------------- |
+| `cost_dashboard.events_recorded_total`          | count   | Volume of requests being tracked — drop signals middleware bypass            |
+| `cost_dashboard.missing_tag_total{tag}`         | count   | Attribution quality — should trend to zero after instrumentation is complete |
+| `cost_dashboard.price_table_age_seconds`        | seconds | Data freshness — alert if > 2h (refresh failed)                              |
+| `cost_dashboard.rollup_lag_seconds`             | seconds | Aggregation health — should be < 5min in normal operation                    |
+| `cost_dashboard.spend_usd_total{feature,model}` | USD     | Primary business metric — watch for unexpected jumps                         |
+| `cost_dashboard.alert_fired_total{type}`        | count   | Alert system health — sustained zero may indicate thresholds too high        |
+| `cost_dashboard.query_latency_p99_ms`           | ms      | Query API health — alert if > 500ms (index degradation or data volume issue) |
 
 **Alerting:**
 
-| Alert | Warning | Critical | First Check |
-|---|---|---|---|
-| Spend spike | >2x rolling 7d baseline for any dimension | >5x baseline | Check if new feature shipped, prompt version changed, or retry strategy changed |
-| Price table stale | Last refresh > 1h ago | Last refresh > 6h ago | Check price fetch job logs; verify external price source is reachable |
-| Missing tags | `unknown` dimension > 10% of total spend | `unknown` > 25% | Find call sites not passing required tags; check recent deploys |
-| Rollup lag | Lag > 10min | Lag > 30min | Check store write throughput; look for lock contention on rollup job |
-| Concentration risk | One dimension > 40% of spend | One dimension > 60% | Expected if one feature dominates — verify it's intentional and budgeted |
+| Alert              | Warning                                   | Critical              | First Check                                                                     |
+| ------------------ | ----------------------------------------- | --------------------- | ------------------------------------------------------------------------------- |
+| Spend spike        | >2x rolling 7d baseline for any dimension | >5x baseline          | Check if new feature shipped, prompt version changed, or retry strategy changed |
+| Price table stale  | Last refresh > 1h ago                     | Last refresh > 6h ago | Check price fetch job logs; verify external price source is reachable           |
+| Missing tags       | `unknown` dimension > 10% of total spend  | `unknown` > 25%       | Find call sites not passing required tags; check recent deploys                 |
+| Rollup lag         | Lag > 10min                               | Lag > 30min           | Check store write throughput; look for lock contention on rollup job            |
+| Concentration risk | One dimension > 40% of spend              | One dimension > 60%   | Expected if one feature dominates — verify it's intentional and budgeted        |
 
 > These thresholds are starting points. A system where one feature legitimately dominates spend (e.g., a product with one primary use case) needs higher concentration thresholds.
 
@@ -193,13 +193,13 @@ See [`src/py/`](src/py/) for the full implementation.
 
 **Tuning levers:**
 
-| Lever | Safe Range | Dangerous Extreme | Effect |
-|---|---|---|---|
-| `spikeSensitivity` | 2.0–4.0 | < 1.5 | Below 1.5, every natural traffic variance triggers an alert — on-call fatigue within a week |
-| `concentrationRiskThreshold` | 0.30–0.60 | < 0.20 | Below 0.20, fires constantly in single-dominant-feature products |
-| `rollupIntervalMinutes` | 15–60 | < 5 | Sub-5-minute rollups with high event volume cause lock contention and write amplification |
-| `retentionDays` | 30–180 | > 365 | Long retention requires archival strategy; raw event storage grows linearly with traffic |
-| `priceRefreshIntervalMs` | 1h–24h | > 72h | Beyond 72h, cost calculations diverge from actual bills during periods of provider pricing changes |
+| Lever                        | Safe Range | Dangerous Extreme | Effect                                                                                             |
+| ---------------------------- | ---------- | ----------------- | -------------------------------------------------------------------------------------------------- |
+| `spikeSensitivity`           | 2.0–4.0    | < 1.5             | Below 1.5, every natural traffic variance triggers an alert — on-call fatigue within a week        |
+| `concentrationRiskThreshold` | 0.30–0.60  | < 0.20            | Below 0.20, fires constantly in single-dominant-feature products                                   |
+| `rollupIntervalMinutes`      | 15–60      | < 5               | Sub-5-minute rollups with high event volume cause lock contention and write amplification          |
+| `retentionDays`              | 30–180     | > 365             | Long retention requires archival strategy; raw event storage grows linearly with traffic           |
+| `priceRefreshIntervalMs`     | 1h–24h     | > 72h             | Beyond 72h, cost calculations diverge from actual bills during periods of provider pricing changes |
 
 **Drift signals:**
 
@@ -212,7 +212,7 @@ Review configuration quarterly, or after any: provider price change, major featu
 
 **Silent degradation:**
 
-At Month 3, the price table is still using prices from the launch configuration. Two models were repriced by the provider — one 40% cheaper, one 15% more expensive. The dashboard shows the wrong relative costs for both, so model routing decisions based on dashboard data are suboptimal. Nobody notices because the dashboard numbers *look* plausible and no alert threshold is tied to invoice reconciliation.
+At Month 3, the price table is still using prices from the launch configuration. Two models were repriced by the provider — one 40% cheaper, one 15% more expensive. The dashboard shows the wrong relative costs for both, so model routing decisions based on dashboard data are suboptimal. Nobody notices because the dashboard numbers _look_ plausible and no alert threshold is tied to invoice reconciliation.
 
 At Month 6, three new features shipped without `feature` attribution tags. The `unknown` dimension now accounts for 22% of spend. Reports to leadership on per-feature cost attribution are understating actual costs for those features by 22%. No alert fires because the missing-tag threshold was set at 25%.
 
@@ -222,11 +222,11 @@ The proactive check: monthly, run a reconciliation comparing dashboard totals to
 
 See [`cost-analysis.md`](cost-analysis.md) for detailed numbers.
 
-| Scale | Additional Cost | ROI vs. No Pattern |
-|---|---|---|
-| 1K req/day | +$0.09/day | Dashboard infrastructure exceeds LLM spend for most workloads at this scale — defer until spend justifies it |
-| 10K req/day | +$0.15/day | Marginal infrastructure cost; optimization decisions enabled by the dashboard (model routing, caching) deliver 2–10x payback |
-| 100K req/day | +$0.25/day | Infrastructure cost is <0.1% of LLM spend at this scale; cost visibility is table stakes for any optimization initiative |
+| Scale        | Additional Cost                       | ROI vs. No Pattern                                                                                                       |
+| ------------ | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| 1K req/day   | +~$0.11/day (+3.3% of GPT-4o spend)   | Dashboard infrastructure is roughly equal to LLM spend at this scale — defer until monthly spend exceeds ~$100/month     |
+| 10K req/day  | +~$0.11/day (+0.33% of GPT-4o spend)  | Marginal cost; model routing enabled by the dashboard (50% of queries → GPT-4o-mini) pays back in under 3 days           |
+| 100K req/day | +~$0.11/day (+0.033% of GPT-4o spend) | Infrastructure cost is <0.1% of LLM spend; cost visibility is table stakes for any optimization initiative at this scale |
 
 ## Testing
 
@@ -245,11 +245,11 @@ Run tests: `cd src/ts && npm test` / `cd src/py && python -m pytest`
 - Budgets under ~$100/month — the engineering time to build and maintain this pattern costs more than the visibility is worth at that scale; use provider dashboard + a weekly manual check
 - Organizations already running comprehensive cloud cost management platforms that natively track LLM API spend at feature/team granularity — check whether the platform already provides what you'd build here before adding another system
 
-## Companion Content
+<!-- ## Companion Content
 
 - Blog post: [Cost Dashboard — Deep Dive](https://prompt-deploy.com/cost-dashboard) (coming soon)
 - Related patterns:
   - [Token Budget Middleware](../token-budget-middleware/) — generates the per-request token counts the dashboard records; implement this first
   - [Model Routing](../model-routing/) — dashboard surfaces per-model cost-effectiveness, informing routing decisions
   - [Semantic Caching](../semantic-caching/) — dashboard shows cache hit savings vs. cache miss costs
-  - [Structured Tracing](../../observability/structured-tracing/) — traces carry the cost metadata the dashboard aggregates; cost events and trace spans share the same `requestId`
+  - [Structured Tracing](../../observability/structured-tracing/) — traces carry the cost metadata the dashboard aggregates; cost events and trace spans share the same `requestId` -->
