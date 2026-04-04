@@ -6,7 +6,7 @@
 
 Prompt changes ship silently broken. The team edits a system prompt, reruns the test suite, sees green — and doesn't notice until a week later that one response category collapsed. There's no compiler error. No stack trace. Just a quiet shift in quality that bypasses every conventional check.
 
-The underlying issue is that LLM outputs aren't deterministic, so the testing primitives that work everywhere else don't apply here. Exact-match assertions fail on every innocent rephrase, training the team to ignore failing tests — which means when a real regression happens, it fails alongside the noise and nobody investigates. The opposite mistake is checking nothing: relying on manual spot-checks after prompt edits that sample maybe 5–10 examples from a space of thousands of possible inputs.
+The underlying issue is that LLM outputs aren't reliably deterministic — even at temperature 0, infrastructure factors like [batching](https://152334h.github.io/blog/non-determinism-in-gpt-4/), quantization, and API version changes can introduce variation — so the testing primitives that work everywhere else don't apply here. Exact-match assertions fail on every innocent rephrase, training the team to ignore failing tests — which means when a real regression happens, it fails alongside the noise and nobody investigates. The opposite mistake is checking nothing: relying on manual spot-checks after prompt edits that sample maybe 5–10 examples from a space of thousands of possible inputs.
 
 What makes this failure mode particularly expensive is category-specific collapse. Aggregate metrics lie: an overall quality score dropping 2% conceals a 15% regression in a specific question type. The summary looks fine. A customer cohort is getting degraded responses. You find out in a support ticket three weeks later.
 
@@ -14,7 +14,7 @@ The pattern that snapshot testing addresses is this: capture what "good" looks l
 
 ## What I Would Not Do
 
-The first instinct is to write exact-match assertions — `expect(output).toBe(snapshot)`. It seems like the right analog to traditional snapshot testing. It's not. The problem surfaces immediately in practice: the model rephrases its answer on every run, even at temperature 0, even for the same prompt. The test suite generates constant noise. The team starts adding `--updateSnapshot` to every CI run to silence the failures, at which point the tests catch nothing.
+The first instinct is to write exact-match assertions — `expect(output).toBe(snapshot)`. It seems like the right analog to traditional snapshot testing. It's not. The problem surfaces immediately in practice: the model rephrases its answer on every run, even at temperature 0, even for the same prompt. The test suite generates constant noise. The team starts adding [`--updateSnapshot`](https://jestjs.io/docs/snapshot-testing) to every CI run to silence the failures, at which point the tests catch nothing.
 
 The second instinct is to go the opposite direction: rely entirely on manual review before shipping prompt changes. I understand the appeal — it avoids the false alarm problem. But manual review doesn't scale. It samples a handful of cases from a large input distribution. The categories it misses are exactly the edge cases most likely to collapse when prompt semantics shift. The 15-point onboarding regression that went undetected for a week? The team had reviewed the change manually and approved it.
 
@@ -127,7 +127,7 @@ interface SnapshotResult {
 
 **Why semantic similarity instead of exact matching.** Exact matching generates false alarms on every stylistic variation, which trains the team to ignore failures. Semantic similarity using embedding cosine distance captures meaning-level changes (a regression) while tolerating surface-level variation (a non-event).
 
-**Why store characteristics, not raw output.** Storing the raw LLM output and re-embedding it on every run is expensive and unstable. Storing derived characteristics (embedding vectors, structural fingerprints, key phrase sets) makes comparisons cheap and reproducible.
+**Why store characteristics, not raw output.** Storing the raw LLM output and re-embedding it on every run adds latency and cost that scales with corpus size, and introduces instability if the embedding model is updated between runs. Storing derived characteristics (embedding vectors, structural fingerprints, key phrase sets) makes comparisons cheap and reproducible.
 
 **Why per-case tracking instead of aggregate scores.** Aggregate similarity scores hide which cases regressed. Per-case pass/fail makes regressions actionable: the diff shows exactly which test cases changed and how.
 

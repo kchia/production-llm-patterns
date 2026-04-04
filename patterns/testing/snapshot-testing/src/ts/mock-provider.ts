@@ -45,6 +45,10 @@ export class MockProvider implements LLMProvider {
     };
   }
 
+  private simulateLatency(): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, this.config.latencyMs));
+  }
+
   async complete(prompt: string): Promise<string> {
     await this.simulateLatency();
 

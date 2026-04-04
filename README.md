@@ -79,13 +79,13 @@ These four system types represent distinct operational profiles — each creates
 | [Eval Harness](patterns/testing/eval-harness/)                                | Required    | Required    | Recommended | Required    |
 | [Regression Testing](patterns/testing/regression-testing/)                     | Required    | Required    | Recommended | Required    |
 | [Adversarial Inputs](patterns/testing/adversarial-inputs/)                     | Recommended | Critical    | Recommended | Optional    |
-| Snapshot Testing                                                              | Recommended | Recommended | Optional    | Recommended |
+| [Snapshot Testing](patterns/testing/snapshot-testing/)                         | Recommended | Recommended | Optional    | Recommended |
 | [Prompt Rollout Testing](patterns/testing/prompt-rollout-testing/)             | Required    | Required    | Recommended | High ROI    |
 | **Safety**                                                                    |             |             |             |             |
 | [Structured Output Validation](patterns/safety/structured-output-validation/) | Required    | Critical    | Required    | Required    |
 | [PII Detection](patterns/safety/pii-detection/)                               | Required    | Required    | Required    | Required    |
 | [Prompt Injection Defense](patterns/safety/prompt-injection-defense/)          | Required    | Critical    | Required    | Recommended |
-| Human-in-the-Loop                                                             | Optional    | Required    | N/A         | Optional    |
+| [Human-in-the-Loop](patterns/safety/human-in-the-loop/)                       | Optional    | Required    | N/A         | Optional    |
 | **Data Pipeline**                                                             |             |             |             |             |
 | [Chunking Strategies](patterns/data-pipeline/chunking-strategies/)             | Critical    | Optional    | N/A         | Recommended |
 | [Embedding Refresh](patterns/data-pipeline/embedding-refresh/)               | Required    | Optional    | N/A         | Required    |

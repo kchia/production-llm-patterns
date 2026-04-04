@@ -1,0 +1,17 @@
+{
+  "name": "human-in-the-loop",
+  "version": "1.0.0",
+  "description": "Human-in-the-Loop gate pattern for LLM agent systems",
+  "type": "module",
+  "main": "index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  }
+}

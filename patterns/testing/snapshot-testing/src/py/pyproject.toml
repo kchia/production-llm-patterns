@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "snapshot-testing"
+version = "1.0.0"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=8.0", "pytest-asyncio>=0.23"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+# NOTE: The ``py/`` directory name collides with pytest's ``py`` library.
+# Run tests from outside the src/ tree with --import-mode=importlib:
+#   cd /tmp && python3 -m pytest <abs-path>/tests/test_index.py --import-mode=importlib

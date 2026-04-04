@@ -304,8 +304,9 @@ describe("Failure Mode: silent embedding model drift", () => {
       // When drift is significant, similarity drops — this is the alert signal
       // (In practice: if this test fails spuriously, pin the embedding model version)
       expect(typeof result.similarity).toBe("number");
-      expect(result.delta.semanticSimilarity).toBeGreaterThanOrEqual(0);
-      expect(result.delta.semanticSimilarity).toBeLessThanOrEqual(1);
+      // Allow tiny float overshoot from normalisation arithmetic
+      expect(result.delta.semanticSimilarity).toBeGreaterThanOrEqual(-1e-9);
+      expect(result.delta.semanticSimilarity).toBeLessThanOrEqual(1 + 1e-9);
     }
   });
 });
