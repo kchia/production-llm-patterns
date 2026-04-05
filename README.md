@@ -90,7 +90,7 @@ These four system types represent distinct operational profiles — each creates
 | [Chunking Strategies](patterns/data-pipeline/chunking-strategies/)             | Critical    | Optional    | N/A         | Recommended |
 | [Embedding Refresh](patterns/data-pipeline/embedding-refresh/)               | Required    | Optional    | N/A         | Required    |
 | [Index Maintenance](patterns/data-pipeline/index-maintenance/)                | Required    | Optional    | N/A         | Recommended |
-| Context Management                                                            | Recommended | Required    | Required    | Optional    |
+| [Context Management](patterns/data-pipeline/context-management/)               | Recommended | Required    | Required    | Optional    |
 | **Orchestration**                                                             |             |             |             |             |
 | [Agent Loop Guards](patterns/orchestration/agent-loop-guards/)                | Optional    | Critical    | Recommended | Recommended |
 | [Tool Call Reliability](patterns/orchestration/tool-call-reliability/)        | Recommended | Critical    | Optional    | Recommended |
