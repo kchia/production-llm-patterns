@@ -74,7 +74,7 @@ These four system types represent distinct operational profiles — each creates
 | [Drift Detection](patterns/observability/drift-detection/)                     | Required    | Recommended | Optional    | Required    |
 | [Prompt Diffing](patterns/observability/prompt-diffing/)                       | Recommended | Recommended | Optional    | Recommended |
 | [Prompt Version Registry](patterns/observability/prompt-version-registry/)     | Required    | Required    | Recommended | Required    |
-| [Online Eval Monitoring](patterns/observability/online-eval-monitoring/)        | Required    | Required    | Recommended | Required    |
+| [Online Eval Monitoring](patterns/observability/online-eval-monitoring/)       | Required    | Required    | Recommended | Required    |
 | **Testing**                                                                   |             |             |             |             |
 | [Eval Harness](patterns/testing/eval-harness/)                                | Required    | Required    | Recommended | Required    |
 | [Regression Testing](patterns/testing/regression-testing/)                     | Required    | Required    | Recommended | Required    |
