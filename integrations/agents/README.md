@@ -4,7 +4,7 @@
 
 An agent system is a loop: the LLM observes state, decides to call a tool, uses the tool's result to update state, and repeats until it decides it's done. That autonomy is what makes agents powerful — and what makes them genuinely difficult to operate in production.
 
-The way I think about agent systems in production: you're building a control system for a non-deterministic actor that can take real-world side effects. Every tool call is a potential write — to a database, an API, an inbox. Every loop iteration costs tokens and time. The failure modes aren't "the API returned 500"; they're "the agent spent $47 on a task that should have cost $0.40" or "the agent completed successfully but corrupted state at step 6 of 9."
+The way I think about agent systems in production: you're building a control system for a non-deterministic actor that can take real-world side effects. Every tool call is a potential write — to a database, an API, an inbox. Every loop iteration costs tokens and time — typically 2–8K tokens and 1–5s per step depending on context size and model. The failure modes aren't "the API returned 500"; they're "the agent spent `$47` on a task that should have cost `$0.40`" or "the agent completed successfully but corrupted state at step 6 of 9."
 
 What that means for pattern selection: agent systems are the system type with the most Critical-rated patterns. The control and observability concerns are higher here than in any other system type. Four patterns are genuinely load-bearing — if they're absent, the system can fail in ways that look like success until something downstream breaks.
 
@@ -14,37 +14,37 @@ What that means for pattern selection: agent systems are the system type with th
 
 These designations come from the [Navigation Matrix](../../README.md#navigation-matrix). The way I'd read this table: **Critical** goes in before launch, **Required** should be in place before you're comfortable being paged, **High ROI** pays back quickly once the foundation is solid.
 
-| Pattern | Priority | Why for Agents |
-|---------|----------|----------------|
-| [Agent Loop Guards](../../patterns/orchestration/agent-loop-guards/) | **Critical** | Without turn and token budgets plus convergence detection, a stuck agent burns the full budget before halting. A single runaway session can cost 50–100× a normal session. |
-| [Tool Call Reliability](../../patterns/orchestration/tool-call-reliability/) | **Critical** | Every agent action is a tool call. Parse failures, wrong argument types, and hallucinated function names all produce failed actions — and failures mid-chain discard all prior work. |
-| [Structured Output Validation](../../patterns/safety/structured-output-validation/) | **Critical** | Agents produce structured output at every reasoning step: tool selection, argument construction, plan updates. A malformed response at step 3 of a 10-step task corrupts everything downstream. |
-| [Prompt Injection Defense](../../patterns/safety/prompt-injection-defense/) | **Critical** | An injected instruction can trigger tool calls with real-world consequences — sending emails, writing to databases, executing code. The blast radius scales with what tools the agent can access. |
-| [Structured Tracing](../../patterns/observability/structured-tracing/) | **Critical** | Agent executions are non-deterministic and multi-step. Without span-level traces covering tool calls, reasoning chains, and branching decisions, debugging a wrong outcome is nearly impossible. |
-| [Multi-Agent Routing](../../patterns/orchestration/multi-agent-routing/) | **Critical** | For systems with multiple specialized agents: a misrouted request doesn't error — it runs in the wrong agent and produces a confidently wrong answer. Worse if that agent has write access. |
-| [Adversarial Inputs](../../patterns/testing/adversarial-inputs/) | **Critical** | Agent systems have a broad attack surface: tool calls, context manipulation, instruction hijacking. Standard test cases don't cover adversarial patterns. |
-| [Retry with Budget](../../patterns/resilience/retry-with-budget/) | **Required** | Agent loops hit provider rate limits and timeouts. Unbounded retries turn transient errors into runaway loops. Budget-bounded retry is the minimum viable resilience layer. |
-| [Circuit Breaker](../../patterns/resilience/circuit-breaker/) | **Required** | When a downstream tool or provider is degraded, an agent without circuit breaking will exhaust its turn budget waiting for timeouts. Each failed tool call consumes turns and tokens. |
-| [Graceful Degradation](../../patterns/resilience/graceful-degradation/) | **Required** | When a critical tool becomes unavailable, the agent needs a defined fallback — reduce scope, surface a partial result, or exit cleanly. Without this, the agent oscillates until it hits a hard cap. |
-| [Token Budget Middleware](../../patterns/cost-control/token-budget-middleware/) | **Required** | Agent context windows grow with each turn. Without token budgeting, long-running tasks accumulate context until the window saturates and the agent starts losing earlier reasoning. |
-| [Context Management](../../patterns/data-pipeline/context-management/) | **Required** | Multi-turn agents accumulate history that eventually exceeds the context limit. Context management preserves critical state (system prompt, task definition) while compressing stale history. |
-| [State Checkpointing](../../patterns/orchestration/state-checkpointing/) | **Required** | A failure at step 8 of a 10-step agent task means restarting from step 1 and paying for steps 1–7 again. Checkpointing creates recovery boundaries so retries start from the last good state. |
-| [Concurrent Request Management](../../patterns/performance/concurrent-request-management/) | **Required** | Agents that fan out tool calls in parallel create burst load. Without concurrency management, parallel tool calls spike rate limits and cause cascading timeouts. |
-| [Eval Harness](../../patterns/testing/eval-harness/) | **Required** | Agent quality can't be verified with unit tests on code — success depends on multi-step reasoning paths that vary per run. An eval harness that scores task completion, tool selection, and output quality is the baseline. |
-| [Regression Testing](../../patterns/testing/regression-testing/) | **Required** | Every prompt change, tool definition update, or model version change is a regression risk. Agent tasks are end-to-end and non-deterministic — only eval-based regression testing catches behavioral changes. |
-| [Prompt Rollout Testing](../../patterns/testing/prompt-rollout-testing/) | **Required** | Agent prompts are load-bearing. A new system prompt can change tool selection behavior, output format, and reasoning style. Rolling out to 5% of traffic first prevents surprises from reaching all users. |
-| [Prompt Version Registry](../../patterns/observability/prompt-version-registry/) | **Required** | Agent system prompts change frequently. Without versioning, you can't correlate a behavior change to the prompt update that caused it. |
-| [Output Quality Monitoring](../../patterns/observability/output-quality-monitoring/) | **Required** | Agent quality degrades silently — the system returns responses, but they're wrong in ways that don't trigger errors. Monitoring scores task completion and output quality on production traffic. |
-| [Online Eval Monitoring](../../patterns/observability/online-eval-monitoring/) | **Required** | CI evals cover scripted test cases. Production agents encounter long-tail inputs that test suites miss. Online monitoring scores a sample of real traffic against quality criteria. |
-| [PII Detection](../../patterns/safety/pii-detection/) | **Required** | Agents read from and write to external systems. PII from retrieved context can appear in outputs and be passed to tools — creating exposure paths that didn't exist in simple generation systems. |
-| [Human-in-the-Loop](../../patterns/safety/human-in-the-loop/) | **Required** | For actions with irreversible consequences (deletions, external API calls, large financial transactions), routing to human review before execution is the right tradeoff. |
-| [Multi-Provider Failover](../../patterns/resilience/multi-provider-failover/) | **High ROI** | Provider outages during long-running agent tasks mean losing everything completed so far. Failover to a secondary provider mid-task preserves work in progress. |
-| [Model Routing](../../patterns/cost-control/model-routing/) | **High ROI** | Agents mix tasks: complex reasoning steps need a capable model; simple tool call parsing doesn't. Routing cheap steps to a lightweight model can halve generation costs without quality loss. |
-| [Latency Budget](../../patterns/performance/latency-budget/) | **Recommended** | For user-facing agents (conversational assistants, coding tools), per-turn latency budgets prevent the agent from spending 10 seconds on a turn that should take 2. |
-| [Drift Detection](../../patterns/observability/drift-detection/) | **Recommended** | Agent behavior drifts as usage patterns evolve, prompts change, and models update. Drift detection surfaces changes in output distribution before they become user-visible problems. |
-| [Prompt Diffing](../../patterns/observability/prompt-diffing/) | **Recommended** | Agent prompts are complex and inter-dependent. Diffing lets you see exactly what changed between prompt versions and correlate behavioral changes to specific edits. |
-| [Snapshot Testing](../../patterns/testing/snapshot-testing/) | **Recommended** | Catches unexpected changes in output format across prompt or model version changes. Useful when downstream consumers parse agent outputs programmatically. |
-| [Cost Dashboard](../../patterns/cost-control/cost-dashboard/) | **Recommended** | Once token budget middleware is in place, a dashboard makes per-session and per-task costs visible. Especially useful when multiple agent types have different cost profiles. |
+| Pattern                                                                                    | Priority        | Why for Agents                                                                                                                                                                                                              |
+| ------------------------------------------------------------------------------------------ | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Agent Loop Guards](../../patterns/orchestration/agent-loop-guards/)                       | **Critical**    | Without turn and token budgets plus convergence detection, a stuck agent burns the full budget before halting. A single runaway session can cost 50–100× a normal session (e.g., a 3-step task that loops 200× before hitting a budget cap burns ~67× the tokens of a normal run).                                                  |
+| [Tool Call Reliability](../../patterns/orchestration/tool-call-reliability/)               | **Critical**    | Every agent action is a tool call. Parse failures, wrong argument types, and hallucinated function names all produce failed actions — and failures mid-chain discard all prior work.                                        |
+| [Structured Output Validation](../../patterns/safety/structured-output-validation/)        | **Critical**    | Agents produce structured output at every reasoning step: tool selection, argument construction, plan updates. A malformed response at step 3 of a 10-step task corrupts everything downstream.                             |
+| [Prompt Injection Defense](../../patterns/safety/prompt-injection-defense/)                | **Critical**    | An injected instruction can trigger tool calls with real-world consequences — sending emails, writing to databases, executing code. The blast radius scales with what tools the agent can access.                           |
+| [Structured Tracing](../../patterns/observability/structured-tracing/)                     | **Critical**    | Agent executions are non-deterministic and multi-step. Without span-level traces covering tool calls, reasoning chains, and branching decisions, debugging a wrong outcome is nearly impossible.                            |
+| [Multi-Agent Routing](../../patterns/orchestration/multi-agent-routing/)                   | **Critical**    | For systems with multiple specialized agents: a misrouted request doesn't error — it runs in the wrong agent and produces a confidently wrong answer. Worse if that agent has write access.                                 |
+| [Adversarial Inputs](../../patterns/testing/adversarial-inputs/)                           | **Critical**    | Agent systems have a broad attack surface: tool calls, context manipulation, instruction hijacking. Standard test cases don't cover adversarial patterns.                                                                   |
+| [Retry with Budget](../../patterns/resilience/retry-with-budget/)                          | **Required**    | Agent loops hit provider rate limits and timeouts. Unbounded retries turn transient errors into runaway loops. Budget-bounded retry is the minimum viable resilience layer.                                                 |
+| [Circuit Breaker](../../patterns/resilience/circuit-breaker/)                              | **Required**    | When a downstream tool or provider is degraded, an agent without circuit breaking will exhaust its turn budget waiting for timeouts. Each failed tool call consumes turns and tokens.                                       |
+| [Graceful Degradation](../../patterns/resilience/graceful-degradation/)                    | **Required**    | When a critical tool becomes unavailable, the agent needs a defined fallback — reduce scope, surface a partial result, or exit cleanly. Without this, the agent oscillates until it hits a hard cap.                        |
+| [Token Budget Middleware](../../patterns/cost-control/token-budget-middleware/)            | **Required**    | Agent context windows grow with each turn. Without token budgeting, long-running tasks accumulate context until the window saturates and the agent starts losing earlier reasoning.                                         |
+| [Context Management](../../patterns/data-pipeline/context-management/)                     | **Required**    | Multi-turn agents accumulate history that eventually exceeds the context limit. Context management preserves critical state (system prompt, task definition) while compressing stale history.                               |
+| [State Checkpointing](../../patterns/orchestration/state-checkpointing/)                   | **Required**    | A failure at step 8 of a 10-step agent task means restarting from step 1 and paying for steps 1–7 again. Checkpointing creates recovery boundaries so retries start from the last good state.                               |
+| [Concurrent Request Management](../../patterns/performance/concurrent-request-management/) | **Required**    | Agents that fan out tool calls in parallel create burst load. Without concurrency management, parallel tool calls spike rate limits and cause cascading timeouts.                                                           |
+| [Eval Harness](../../patterns/testing/eval-harness/)                                       | **Required**    | Agent quality can't be verified with unit tests on code — success depends on multi-step reasoning paths that vary per run. An eval harness that scores task completion, tool selection, and output quality is the baseline. |
+| [Regression Testing](../../patterns/testing/regression-testing/)                           | **Required**    | Every prompt change, tool definition update, or model version change is a regression risk. Agent tasks are end-to-end and non-deterministic — only eval-based regression testing catches behavioral changes.                |
+| [Prompt Rollout Testing](../../patterns/testing/prompt-rollout-testing/)                   | **Required**    | Agent prompts are load-bearing. A new system prompt can change tool selection behavior, output format, and reasoning style. Rolling out to 5% of traffic first prevents surprises from reaching all users.                  |
+| [Prompt Version Registry](../../patterns/observability/prompt-version-registry/)           | **Required**    | Agent system prompts change frequently. Without versioning, you can't correlate a behavior change to the prompt update that caused it.                                                                                      |
+| [Output Quality Monitoring](../../patterns/observability/output-quality-monitoring/)       | **Required**    | Agent quality degrades silently — the system returns responses, but they're wrong in ways that don't trigger errors. Monitoring scores task completion and output quality on production traffic.                            |
+| [Online Eval Monitoring](../../patterns/observability/online-eval-monitoring/)             | **Required**    | CI evals cover scripted test cases. Production agents encounter long-tail inputs that test suites miss. Online monitoring scores a sample of real traffic against quality criteria.                                         |
+| [PII Detection](../../patterns/safety/pii-detection/)                                      | **Required**    | Agents read from and write to external systems. PII from retrieved context can appear in outputs and be passed to tools — creating exposure paths that didn't exist in simple generation systems.                           |
+| [Human-in-the-Loop](../../patterns/safety/human-in-the-loop/)                              | **Required**    | For actions with irreversible consequences (deletions, external API calls, large financial transactions), routing to human review before execution is the right tradeoff.                                                   |
+| [Multi-Provider Failover](../../patterns/resilience/multi-provider-failover/)              | **High ROI**    | Provider outages during long-running agent tasks mean losing everything completed so far. Failover to a secondary provider mid-task preserves work in progress.                                                             |
+| [Model Routing](../../patterns/cost-control/model-routing/)                                | **High ROI**    | Agents mix tasks: complex reasoning steps need a capable model; simple tool call parsing doesn't. Routing cheap steps to a lightweight model can halve generation costs without quality loss.                               |
+| [Latency Budget](../../patterns/performance/latency-budget/)                               | **Recommended** | For user-facing agents (conversational assistants, coding tools), per-turn latency budgets prevent the agent from spending 10 seconds on a turn that should take 2.                                                         |
+| [Drift Detection](../../patterns/observability/drift-detection/)                           | **Recommended** | Agent behavior drifts as usage patterns evolve, prompts change, and models update. Drift detection surfaces changes in output distribution before they become user-visible problems.                                        |
+| [Prompt Diffing](../../patterns/observability/prompt-diffing/)                             | **Recommended** | Agent prompts are complex and inter-dependent. Diffing lets you see exactly what changed between prompt versions and correlate behavioral changes to specific edits.                                                        |
+| [Snapshot Testing](../../patterns/testing/snapshot-testing/)                               | **Recommended** | Catches unexpected changes in output format across prompt or model version changes. Useful when downstream consumers parse agent outputs programmatically.                                                                  |
+| [Cost Dashboard](../../patterns/cost-control/cost-dashboard/)                              | **Recommended** | Once token budget middleware is in place, a dashboard makes per-session and per-task costs visible. Especially useful when multiple agent types have different cost profiles.                                               |
 
 ---
 
@@ -186,60 +186,65 @@ These snippets show how the core patterns compose. They use the actual implement
 ### TypeScript: Per-Turn Execution Loop
 
 ```typescript
-import { AgentLoopGuards } from '../../patterns/orchestration/agent-loop-guards/src/ts/index.js';
-import { ToolCallValidator } from '../../patterns/orchestration/tool-call-reliability/src/ts/index.js';
-import { OutputValidator } from '../../patterns/safety/structured-output-validation/src/ts/index.js';
-import { ContextManager } from '../../patterns/data-pipeline/context-management/src/ts/index.js';
-import { CheckpointManager } from '../../patterns/orchestration/state-checkpointing/src/ts/index.js';
-import { Tracer } from '../../patterns/observability/structured-tracing/src/ts/index.js';
-import { RetryBudget } from '../../patterns/resilience/retry-with-budget/src/ts/index.js';
-import { InjectionDefense } from '../../patterns/safety/prompt-injection-defense/src/ts/index.js';
+import { AgentLoopGuards } from "../../patterns/orchestration/agent-loop-guards/src/ts/index.js";
+import { ToolCallValidator } from "../../patterns/orchestration/tool-call-reliability/src/ts/index.js";
+import { OutputValidator } from "../../patterns/safety/structured-output-validation/src/ts/index.js";
+import { ContextManager } from "../../patterns/data-pipeline/context-management/src/ts/index.js";
+import { CheckpointManager } from "../../patterns/orchestration/state-checkpointing/src/ts/index.js";
+import { Tracer } from "../../patterns/observability/structured-tracing/src/ts/index.js";
+import { RetryBudget } from "../../patterns/resilience/retry-with-budget/src/ts/index.js";
+import { InjectionDefense } from "../../patterns/safety/prompt-injection-defense/src/ts/index.js";
 
 // Wire up once at startup
 const guards = new AgentLoopGuards({
   maxTurns: 20,
-  maxTokens: 50_000,   // per-session ceiling
-  repetitionWindow: 3, // halt if last 3 tool calls are identical
+  maxTokens: 50_000, // per-session ceiling
+  repetitionWindow: 3 // halt if last 3 tool calls are identical
 });
 
 const toolValidator = new ToolCallValidator({
   allowedTools: TOOL_REGISTRY.names(),
-  maxRetries: 2,
+  maxRetries: 2
 });
 
 const outputValidator = new OutputValidator({ maxRetries: 2 });
 
 const contextManager = new ContextManager({
-  maxTokens: 40_000,   // leave 10K headroom for output
+  maxTokens: 40_000, // leave 10K headroom for output
   preserveSystemPrompt: true,
-  summaryModel: 'claude-haiku-4-5', // lightweight model for compression
+  summaryModel: "claude-haiku-4-5" // lightweight model for compression
 });
 
 const checkpoints = new CheckpointManager(db, { ttl: 3600 });
-const tracer = new Tracer({ serviceName: 'agent-service' });
+const tracer = new Tracer({ serviceName: "agent-service" });
 const retryBudget = new RetryBudget({ maxAttempts: 3, budgetTokens: 5_000 });
 const injectionDefense = new InjectionDefense({ threshold: 0.8 });
 
 async function runAgentTask(
   taskId: string,
-  userInput: string,
+  userInput: string
 ): Promise<AgentResult> {
-  const rootSpan = tracer.startSpan('agent.task', { taskId });
+  const rootSpan = tracer.startSpan("agent.task", { taskId });
 
   // 1. Scan input for injection before it enters context
   const inputScan = injectionDefense.scan(userInput);
   if (inputScan.flagged) {
-    rootSpan.setAttributes({ 'security.injection_blocked': true });
+    rootSpan.setAttributes({ "security.injection_blocked": true });
     throw new InjectionBlockedError(inputScan.reason);
   }
 
   // 2. Load checkpoint if this task was interrupted
-  const state = await checkpoints.load(taskId) ?? AgentState.initial(userInput);
+  const state =
+    (await checkpoints.load(taskId)) ?? AgentState.initial(userInput);
   const messages = contextManager.restore(state.messages);
 
   try {
     while (!guards.isDone(state)) {
-      const turnSpan = tracer.startSpan('agent.turn', { turn: state.turnCount }, rootSpan);
+      const turnSpan = tracer.startSpan(
+        "agent.turn",
+        { turn: state.turnCount },
+        rootSpan
+      );
 
       // 3. Check budgets before every turn
       guards.checkBudget(state); // throws BudgetExhaustedError if over limit
@@ -249,23 +254,28 @@ async function runAgentTask(
 
       // 5. LLM call with retry budget
       const llmResponse = await retryBudget.execute(() =>
-        llmProvider.chat(fittedMessages, VERSIONED_SYSTEM_PROMPT),
+        llmProvider.chat(fittedMessages, VERSIONED_SYSTEM_PROMPT)
       );
 
       // 6. Validate and execute tool call (if any)
       if (llmResponse.toolCall) {
-        const validatedCall = await toolValidator.validate(llmResponse.toolCall);
+        const validatedCall = await toolValidator.validate(
+          llmResponse.toolCall
+        );
         turnSpan.setAttributes({
-          'tool.name': validatedCall.name,
-          'tool.validation_attempts': validatedCall.attempts,
+          "tool.name": validatedCall.name,
+          "tool.validation_attempts": validatedCall.attempts
         });
 
         const toolResult = await TOOL_REGISTRY.execute(validatedCall);
-        messages.push({ role: 'tool', content: toolResult });
+        messages.push({ role: "tool", content: toolResult });
       }
 
       // 7. Checkpoint after each successful turn
-      await checkpoints.save(taskId, { messages, turnCount: state.turnCount + 1 });
+      await checkpoints.save(taskId, {
+        messages,
+        turnCount: state.turnCount + 1
+      });
 
       state.advance(llmResponse);
       turnSpan.end();
@@ -274,11 +284,13 @@ async function runAgentTask(
     // 8. Validate final output structure
     const validated = await outputValidator.validate(
       state.finalOutput,
-      AgentResultSchema,
+      AgentResultSchema
     );
-    rootSpan.setAttributes({ 'task.turns': state.turnCount, 'task.success': true });
+    rootSpan.setAttributes({
+      "task.turns": state.turnCount,
+      "task.success": true
+    });
     return validated.data;
-
   } catch (err) {
     rootSpan.recordError(err);
     throw err;
@@ -291,28 +303,28 @@ async function runAgentTask(
 ### TypeScript: Multi-Agent Routing + Human-in-the-Loop
 
 ```typescript
-import { AgentRouter } from '../../patterns/orchestration/multi-agent-routing/src/ts/index.js';
-import { HumanReviewGate } from '../../patterns/safety/human-in-the-loop/src/ts/index.js';
+import { AgentRouter } from "../../patterns/orchestration/multi-agent-routing/src/ts/index.js";
+import { HumanReviewGate } from "../../patterns/safety/human-in-the-loop/src/ts/index.js";
 
 const router = new AgentRouter({
   agents: AGENT_REGISTRY,
   confidenceThreshold: 0.85,
-  fallbackAgent: 'generalist',
+  fallbackAgent: "generalist"
 });
 
 const humanGate = new HumanReviewGate({
   // Actions that require human confirmation before execution
   highStakesPredicate: (toolCall) =>
     HIGH_STAKES_TOOLS.includes(toolCall.name) ||
-    (toolCall.name === 'api_call' && toolCall.args.method !== 'GET'),
-  timeoutMs: 300_000,  // 5-minute review window
-  timeoutBehavior: 'reject', // fail safe: reject if reviewer doesn't respond
+    (toolCall.name === "api_call" && toolCall.args.method !== "GET"),
+  timeoutMs: 300_000, // 5-minute review window
+  timeoutBehavior: "reject" // fail safe: reject if reviewer doesn't respond
 });
 
 async function handleAgentRequest(request: UserRequest): Promise<AgentResult> {
   // 1. Route to the right agent
   const { agentId, confidence, fallback } = await router.classify(request);
-  logger.info('agent.routed', { agentId, confidence, fallback });
+  logger.info("agent.routed", { agentId, confidence, fallback });
 
   const agent = AGENT_REGISTRY.get(agentId);
 
@@ -323,7 +335,7 @@ async function handleAgentRequest(request: UserRequest): Promise<AgentResult> {
       if (!review.approved) {
         throw new ToolExecutionBlockedError(toolCall.name, review.reason);
       }
-    },
+    }
   });
 }
 ```
@@ -465,6 +477,8 @@ async def handle_agent_request(request: UserRequest) -> AgentResult:
 **Multi-Provider Failover** — the added complexity (second provider contract, different tool support across providers, context migration during failover) isn't worth it until you've experienced provider outages and know their actual frequency and duration in your context. The first outage will change the calculus.
 
 **Drift Detection** — high-value once the system is stable and you have a quality monitoring baseline to compare against. Early on, direct quality monitoring and regression testing catch the signal drift detection would find.
+
+**Semantic Caching** — agents rarely benefit. Each turn's prompt includes accumulated history and tool results, so prompts are effectively unique and cache hit rates stay near zero. Skip unless you have a narrow sub-workflow with genuinely repeated inputs.
 
 **Adversarial Inputs testing** — building adversarial test cases requires understanding your actual threat model and attack surface. Skip until the system is stable and injection defense is in place to defend against what you find.
 
