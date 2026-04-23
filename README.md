@@ -17,6 +17,26 @@ This is my way of consolidating and accelerating that learning. Hopefully you fi
 - **Benchmarks and cost analysis** per pattern -- not just "it works" but "it works at this cost"
 - **Failure modes documented** -- every pattern includes how it itself can fail
 
+## Table of Contents
+
+**Start Here**
+- [How to Use This Repo](#how-to-use-this-repo) — orient by what you're trying to do
+- [Why This Exists](#why-this-exists) — the thinking behind the repo
+- [What Makes This Different](#what-makes-this-different) — the editorial choices
+
+**Browse**
+- [Navigation Matrix](#navigation-matrix) — every pattern mapped to system types
+- [Pattern Categories](#pattern-categories) — eight production concerns
+- [Integrations](#integrations) — how patterns combine for RAG, Agents, Streaming, Batch, Multi-Agent
+- [Guides](#guides) — adoption roadmap, composition recipes, anti-pattern catalog
+
+**Reference**
+- [Shared Utilities](#shared-utilities) — reusable libraries across patterns
+- [Philosophy](#philosophy) — the point of view behind the patterns
+- [Contributing](#contributing) — proposing patterns, flagging gaps
+- [Companion Content](#companion-content) — blog and design notes
+- [License](#license)
+
 ## How to Use This Repo
 
 ### If you're exploring
@@ -42,6 +62,14 @@ Every pattern follows the same structure. Here's what each section answers:
 ### If you're building a system from scratch
 
 Patterns at the top of each category tend to be foundational — they're what I'd want in place first. The "Related patterns" section at the bottom of each pattern shows what naturally follows. There's no single right order; the way I'd think about sequencing is: start with whatever's **Critical** for the system type, then layer in **Required** patterns as the system stabilizes.
+
+### If you want a timeline for what to adopt when
+
+The [adoption roadmap](docs/adoption-roadmap.md) lays out a sequence by maturity: Week 1 essentials I wouldn't ship without, Month 1 core resilience and observability, Quarter 1 coverage by system type. Useful when the question isn't "which pattern" but "which pattern first."
+
+### If you want to see how patterns combine
+
+The [composition recipes](docs/recipes/) show 2-3 patterns wired together for a specific problem — resilience stack, cost control stack, safe prompt iteration, RAG quality stack, agent safety stack. Each recipe has architecture diagrams, TS + Python wiring code, and combined failure modes. Useful when you know the problem but aren't sure which patterns solve it together.
 
 ## Navigation Matrix
 
@@ -159,6 +187,14 @@ Patterns are designed to be composed. The [integrations/](integrations/) directo
 - [Streaming Systems](integrations/streaming/) -- Patterns for real-time LLM responses
 - [Batch Systems](integrations/batch/) -- Patterns for high-throughput offline processing
 
+## Guides
+
+Deeper references that cut across individual patterns:
+
+- [Adoption Roadmap](docs/adoption-roadmap.md) -- Week 1 essentials → Month 1 core → Quarter 1 coverage by system type, plus maturity signals for when to move forward
+- [Composition Recipes](docs/recipes/) -- Five recipes showing 2-3 patterns wired together: resilience stack, cost control stack, safe prompt iteration, RAG quality stack, agent safety stack
+- [Anti-Pattern Catalog](docs/anti-patterns.md) -- All 35 "What I Would Not Do" sections organized by category, with links back to the pattern that solves each one
+
 ## Shared Utilities
 
 The [shared/](shared/) directory contains reusable utilities used across patterns:
@@ -166,7 +202,7 @@ The [shared/](shared/) directory contains reusable utilities used across pattern
 - [Cost Tracker](shared/cost-tracker/) -- Token counting and spend tracking
 - [Trace Logger](shared/trace-logger/) -- Structured logging for LLM calls
 - [Test Fixtures](shared/test-fixtures/) -- Common test data and mock providers
-- [Latency Tracker](shared/latency-tracker/) -- Latency budget propagation and measurement
+- [Latency Tracker](shared/latency-tracker/) -- Stopwatch timing, percentile computation, and sliding-window health tracking
 - [Prompt Registry](shared/prompt-registry/) -- Prompt version storage and retrieval
 
 ## Philosophy
@@ -180,6 +216,10 @@ This repo reflects a specific point of view about production AI systems:
 5. **Data quality is your ceiling.** The model can't outperform what you feed it. Several patterns in this repo exist solely because upstream data isn't as clean as you think.
 6. **Systems that don't learn, decay.** A deployed pattern isn't done. Every pattern documents tuning levers and drift signals because what works at launch degrades over months.
 
+## Contributing
+
+If you want to propose a new pattern, flag something that's wrong, or suggest an improvement, [CONTRIBUTING.md](CONTRIBUTING.md) covers how. Issue templates for pattern requests, bug reports, and improvements are available when you [open a new issue](https://github.com/kchia/production-llm-patterns/issues/new/choose).
+
 ## Companion Content
 
 This repo is part of a larger effort to build durable thinking around production AI. Two primary companion resources:
@@ -191,4 +231,4 @@ Each pattern also has a companion blog post on [Prompt Deploy](https://prompt-de
 
 ## License
 
-MIT
+[MIT](LICENSE)
