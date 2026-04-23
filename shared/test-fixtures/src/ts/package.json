@@ -1,0 +1,18 @@
+{
+  "name": "@production-llm-patterns/test-fixtures",
+  "version": "0.1.0",
+  "description": "Shared mock LLM provider, handler factories, and streaming mocks for testing all 35 patterns",
+  "type": "module",
+  "main": "./index.ts",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.0"
+  }
+}

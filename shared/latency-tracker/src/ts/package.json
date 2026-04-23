@@ -1,0 +1,18 @@
+{
+  "name": "@production-llm-patterns/latency-tracker",
+  "version": "0.1.0",
+  "description": "Shared latency measurement and percentile computation utility for LLM request tracking",
+  "type": "module",
+  "main": "./index.ts",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.0"
+  }
+}

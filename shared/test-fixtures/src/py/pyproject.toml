@@ -1,0 +1,10 @@
+[project]
+name = "test-fixtures"
+version = "0.1.0"
+description = "Shared mock LLM provider, handler factories, and streaming mocks for testing all 35 patterns"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = ["--import-mode=importlib"]
