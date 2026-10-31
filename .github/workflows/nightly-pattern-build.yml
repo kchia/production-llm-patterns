@@ -1,8 +1,7 @@
 name: Nightly Pattern Build
 
 on:
-  schedule:
-    - cron: '30 14 * * *' # Midnight SGT (UTC+8)
+  # Nightly schedule turned off 2026-10-31: the repo is frozen as a reference. Run by hand if needed.
   workflow_dispatch:
 
 jobs:

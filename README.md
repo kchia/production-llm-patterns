@@ -1,12 +1,12 @@
 # Production LLM Patterns
 
-The more you work with AI in production, the more patterns emerge — retry logic, cost guardrails, eval loops, fallback chains. They show up in every system, regardless of framework or model provider. This repo captures those patterns as framework-agnostic reference implementations — with benchmarks and cost analysis. It's not chasing the latest tool; it's meant to be evergreen.
+The more you work with AI in production, the more patterns emerge — retry logic, cost guardrails, eval loops, fallback chains. They show up in every system, regardless of framework or model provider. This repo captures those patterns as framework-agnostic reference implementations, with overhead benchmarks and modeled cost analysis (see [How this was built](#how-this-was-built)). It's not chasing the latest tool; it's meant to be evergreen.
 
 ## Why This Exists
 
 This repo started from a realization: the more I learn about AI in production, the more I see the same patterns across wildly different systems. Retry budgets, circuit breakers, token cost guardrails, eval harnesses — they keep showing up whether you're building RAG, agents, or streaming interfaces.
 
-These patterns are framework-agnostic. They don't chase tools — they occasionally link to them. As AI gets integrated into every product, understanding these production patterns is becoming table stakes for full-stack engineers.
+These patterns are framework-agnostic. They don't chase tools — they occasionally link to them. As AI gets integrated into every product, understanding these production patterns is becoming table stakes for engineers who own AI in production.
 
 This is my way of consolidating and accelerating that learning. Hopefully you find it useful too. If you have feedback or want to contribute, [open a GitHub issue](https://github.com/kchia/production-llm-patterns/issues) — I'd love to hear from you.
 
@@ -14,8 +14,12 @@ This is my way of consolidating and accelerating that learning. Hopefully you fi
 
 - **Organized by production concern**, not app type -- because your question isn't "how do I build RAG" but "how do I make my RAG survive production"
 - **Dual implementations** in TypeScript and Python -- idiomatic, not translated
-- **Benchmarks and cost analysis** per pattern -- not just "it works" but "it works at this cost"
+- **Benchmarks and cost analysis** per pattern -- overhead measured against mock providers, and cost modeled at three scales from published pricing (not measured in production)
 - **Failure modes documented** -- every pattern includes how it itself can fail
+
+## How this was built
+
+Patterns were produced with an AI-assisted build pipeline I designed (research, design, implementation, tests, benchmarks, cost analysis, ops notes). Implementations run against mock providers. Benchmarks measure each pattern's own overhead, not model quality or provider latency. Cost figures are modeled from published pricing at three scales. Treat these as reference implementations to adapt and test in your own system, not as production-proven code.
 
 ## Table of Contents
 
